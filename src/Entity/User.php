@@ -9,6 +9,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -29,6 +30,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le mot de passe est obligatoire")]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
@@ -43,7 +45,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $alias = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Assert\GreaterThanOrEqual(value: '13', message: 'Vous devez avoir minimum 13 ans pour vous inscrire')]
+    #[Assert\LessThanOrEqual(value: '-13 years', message: 'Vous devez avoir minimum 13 ans pour vous inscrire')]
     private ?\DateTimeInterface $birthDate = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -60,9 +62,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private array $roles = ['ROLE_USER'];
 
+    private UserPasswordHasherInterface $passwordHasher;
+
+    public function __construct(UserPasswordHasherInterface $passwordHasher)
+    {
+        $this->passwordHasher = $passwordHasher;
+    }
+
     public function getFullName(): string
     {
-        return $this->firstName.' '.$this->lastName;
+        return $this->firstname.' '.$this->lastname;
     }
 
     public function getId(): ?int
