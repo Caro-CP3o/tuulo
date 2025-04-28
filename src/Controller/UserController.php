@@ -23,27 +23,3 @@ final class UserController extends AbstractController
         ]);
     }
 }
-
-class UserRegistrationController extends AbstractController
-{
-    #[Route('/api/register', name: 'api_register', methods: ['POST'])]
-    public function register(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $em): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
-
-        $user = new User();
-        $user->setEmail($data['email']);
-        $user->setFirstname($data['firstname']);
-        $user->setLastname($data['lastname']);
-        $user->setBirthDate(new \DateTime($data['birthDate']));
-        $user->setColor($data['color']);
-
-        $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
-        $user->setPassword($hashedPassword);
-
-        $em->persist($user);
-        $em->flush();
-
-        return $this->json(['message' => 'User created successfully']);
-    }
-}

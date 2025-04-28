@@ -1,7 +1,10 @@
 security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+        App\Entity\User: 'auto'
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+            algorithm: 'auto'
+            cost:      15    
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
         # users_in_memory: { memory: null }
@@ -20,6 +23,7 @@ security:
             pattern: ^/api/users
             stateless: true
             methods: [POST]
+            security: false
         login:
             pattern: ^/api/login
             stateless: true
@@ -60,6 +64,7 @@ when@test:
             # are not important, waste resources and increase test times. The following
             # reduces the work factor to the lowest possible values.
             Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                App\Entity\User: 'auto'
                 algorithm: auto
                 cost: 4 # Lowest possible value for bcrypt
                 time_cost: 3 # Lowest possible value for argon
