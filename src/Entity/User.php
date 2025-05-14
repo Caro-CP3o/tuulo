@@ -68,6 +68,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $avatar = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Vous devez choisir une couleur')]
     #[Groups(['user:read', 'user:write'])]
     private ?string $color = null;
 
@@ -97,6 +98,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     //     $this->passwordHasher = $passwordHasher;
     // }
 
+    
     public function getFullName(): string
     {
         return $this->firstname . ' ' . $this->lastname;
