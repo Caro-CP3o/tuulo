@@ -5,6 +5,8 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
 use Cocur\Slugify\Slugify;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -76,6 +78,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     #[Groups(['user:read', 'user:write'])]
     private array $roles = ['ROLE_USER'];
+
+    /**
+     * @var Collection<int, FamilyMember>
+     */
+    #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'user')]
+    private Collection $familyMembers;
+
+    public function __construct()
+    {
+        $this->familyMembers = new ArrayCollection();
+    }
 
     // private UserPasswordHasherInterface $passwordHasher;
 
@@ -236,5 +249,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $slugify = new Slugify();
             $this->slug = $slugify->slugify($this->firstname . ' ' . $this->lastname . ' ' . uniqid());
         }
+    }
+
+    /**
+     * @return Collection<int, FamilyMember>
+     */
+    public function getFamilyMembers(): Collection
+    {
+        return $this->familyMembers;
+    }
+
+    public function addFamilyMember(FamilyMember $familyMember): static
+    {
+        if (!$this->familyMembers->contains($familyMember)) {
+            $this->familyMembers->add($familyMember);
+            $familyMember->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFamilyMember(FamilyMember $familyMember): static
+    {
+        if ($this->familyMembers->removeElement($familyMember)) {
+            // set the owning side to null (unless already changed)
+            if ($familyMember->getUser() === $this) {
+                $familyMember->setUser(null);
+            }
+        }
+
+        return $this;
     }
 }
