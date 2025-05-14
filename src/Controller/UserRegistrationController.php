@@ -7,6 +7,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
@@ -46,7 +47,7 @@ final class UserRegistrationController extends AbstractController
         // Validate email format
         if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             return $this->json([
-            'error' => 'L\'adresse email fournie n\'est pas valide.'
+                'error' => 'L\'adresse email fournie n\'est pas valide.'
             ], JsonResponse::HTTP_BAD_REQUEST); // 400 Bad Request
         }
         // Check if email already exists (IMPORTANT)

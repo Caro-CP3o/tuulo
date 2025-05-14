@@ -35,9 +35,16 @@ class Family
     #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'family', orphanRemoval: true)]
     private Collection $familyMembers;
 
+    /**
+     * @var Collection<int, Post>
+     */
+    #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'family')]
+    private Collection $posts;
+
     public function __construct()
     {
         $this->familyMembers = new ArrayCollection();
+        $this->posts = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -117,6 +124,36 @@ class Family
             // set the owning side to null (unless already changed)
             if ($familyMember->getFamily() === $this) {
                 $familyMember->setFamily(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Post>
+     */
+    public function getPosts(): Collection
+    {
+        return $this->posts;
+    }
+
+    public function addPost(Post $post): static
+    {
+        if (!$this->posts->contains($post)) {
+            $this->posts->add($post);
+            $post->setFamily($this);
+        }
+
+        return $this;
+    }
+
+    public function removePost(Post $post): static
+    {
+        if ($this->posts->removeElement($post)) {
+            // set the owning side to null (unless already changed)
+            if ($post->getFamily() === $this) {
+                $post->setFamily(null);
             }
         }
 
