@@ -16,21 +16,20 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        main:
-            lazy: true
-            provider: app_user_provider
+        
         registration:
             pattern: ^/api/users
             stateless: true
             methods: [POST]
-            security: false
         login:
             pattern: ^/api/login
             stateless: true
             json_login:
                 check_path: /api/login_check
+                username_path: email   # <-- Accept "email" field
+                password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
-                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure 
         api:
             pattern:   ^/api
             stateless: true
@@ -40,6 +39,9 @@ security:
 
             # https://symfony.com/doc/current/security/impersonating_user.html
             # switch_user: true
+        main:
+            lazy: true
+            provider: app_user_provider
     role_hierarchy:
         ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_MODERATOR, ROLE_FAMILY_ADMIN, ROLE_USER]
         ROLE_ADMIN: [ROLE_FAMILY_ADMIN, ROLE_MODERATOR, ROLE_USER]
@@ -51,10 +53,12 @@ security:
     access_control:
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
+        # - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        # - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         # - { path: ^/api/customers, roles: IS_AUTHENTICATED_FULLY }
         # - { path: ^/api/invoices, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/api/users, roles: IS_AUTHENTICATED_FULLY, methods: [GET,PUT,PATCH,DELETE] }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY, methods: [GET,PUT,PATCH,DELETE] }
 
 when@test:
     security:

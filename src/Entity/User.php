@@ -119,7 +119,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     //     $this->passwordHasher = $passwordHasher;
     // }
 
-    
+
     public function getFullName(): string
     {
         return $this->firstname . ' ' . $this->lastname;
@@ -150,6 +150,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
+    }
+
+    public function getUsername(): string
+    {
+        return $this->email;
     }
 
     public function getPassword(): ?string
