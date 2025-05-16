@@ -120,6 +120,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // }
 
 
+    #[ORM\Column(type: 'boolean')]
+    #[Groups(['user:read'])]
+    private bool $isVerified = false;
+
+    #[ORM\Column(type: 'string', length: 6, nullable: true)]
+    private ?string $emailVerificationCode = null;
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setIsVerified(bool $isVerified): self
+    {
+        $this->isVerified = $isVerified;
+        return $this;
+    }
+
+    public function getEmailVerificationCode(): ?string
+    {
+        return $this->emailVerificationCode;
+    }
+
+    public function setEmailVerificationCode(?string $code): self
+    {
+        $this->emailVerificationCode = $code;
+        return $this;
+    }
+
+
     public function getFullName(): string
     {
         return $this->firstname . ' ' . $this->lastname;
