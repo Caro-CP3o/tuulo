@@ -9,23 +9,29 @@ use Psr\Log\LoggerInterface;
 
 class EmailVerificationMailer
 {
-    public function __construct(
-        private MailerInterface $mailer,
-        private LoggerInterface $logger
-    ) {
+    private MailerInterface $mailer;
+    private LoggerInterface $logger;
+
+    public function __construct(MailerInterface $mailer, LoggerInterface $logger)
+    {
+        $this->mailer = $mailer;
+        $this->logger = $logger;
     }
 
     public function sendVerificationCode(User $user): void
     {
+        $code = $user->getEmailVerificationCode();
+        $verificationLink = sprintf('http://localhost:8000/verify-email?code=%s', $code);
+
         $email = (new Email())
             ->from('no-reply@tuulo.com')
             ->to($user->getEmail())
             ->subject('Verify your email address')
-            ->text("Hello " . $user->getFirstname() . "!\n\nYour Tuulo verification code is: " . $user->getEmailVerificationCode());
+            ->text(
+                sprintf("Hello %s,\n\nPlease verify your email by clicking the link below:\n%s", $user->getFirstname(), $verificationLink)
+            );
 
         $this->mailer->send($email);
-
-        // Log the action
-        $this->logger->info("Sent verification email to {$user->getEmail()}");
+        $this->logger->info("Sent verification email to {$user->getEmail()} with code: {$code}");
     }
 }

@@ -2,46 +2,49 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Routing\Annotation\Route;
-final class EmailVerificationController extends AbstractController
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class EmailVerificationController extends AbstractController
 {
-    #[Route('/verify-email', name: 'verify_email', methods: ['POST'])]
-    public function __invoke(
+
+    #[Route('/verify-email', name: 'app_verify_email', methods: ['GET'])]
+    public function verifyEmail(
         Request $request,
         UserRepository $userRepository,
         EntityManagerInterface $em
-    ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
-        $email = $data['email'] ?? null;
-        $code = $data['code'] ?? null;
+    ): RedirectResponse {
+        $code = $request->query->get('code');
 
-        if (!$email || !$code) {
-            return new JsonResponse(['error' => 'Missing email or code'], 400);
+        if (!$code) {
+            $this->addFlash('error', 'Missing verification code.');
+            return $this->redirectToRoute('app_login');
         }
 
-        $user = $userRepository->findOneBy(['email' => $email]);
+        $user = $userRepository->findOneBy(['emailVerificationCode' => $code]);
 
         if (!$user) {
-            return new JsonResponse(['error' => 'User not found'], 404);
+            $this->addFlash('error', 'Invalid or expired code.');
+            return $this->redirectToRoute('app_login');
         }
 
         if ($user->isVerified()) {
-            return new JsonResponse(['message' => 'User already verified'], 200);
-        }
-
-        if ($user->getEmailVerificationCode() !== $code) {
-            return new JsonResponse(['error' => 'Invalid verification code'], 400);
+            $this->addFlash('info', 'Your email is already verified.');
+            return $this->redirectToRoute('app_login');
         }
 
         $user->setIsVerified(true);
-        $user->setEmailVerificationCode(null); // Clear code
+        $user->setEmailVerificationCode(null);
+
+        $em->persist($user);
         $em->flush();
 
-        return new JsonResponse(['message' => 'Email verified successfully'], 200);
+        $this->addFlash('success', 'Your email has been verified. You can now log in!');
+
+        return $this->redirectToRoute('app_login');
     }
 }
