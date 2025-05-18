@@ -6,6 +6,7 @@ use App\Repository\PostCommentRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PostCommentRepository::class)]
@@ -34,6 +35,13 @@ class PostComment
     private Collection $replies;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: "Le commentaire ne peut pas être vide.")]
+    #[Assert\Length(
+        min: 1,
+        max: 2000,
+        minMessage: "Le commentaire est trop court.",
+        maxMessage: "Le commentaire ne peut pas dépasser {{ limit }} caractères."
+    )]
     private ?string $content = null;
 
     #[ORM\Column]

@@ -80,6 +80,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read', 'user:write'])]
     private array $roles = ['ROLE_USER'];
 
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $createdAt = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $updatedAt = null;
+
     /**
      * @var Collection<int, FamilyMember>
      */
@@ -307,6 +313,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $slugify = new Slugify();
             $this->slug = $slugify->slugify($this->firstname . ' ' . $this->lastname . ' ' . uniqid());
         }
+    }
+
+    #[ORM\PrePersist]
+    public function onPrePersist(): void
+    {
+        $this->createdAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    #[ORM\PreUpdate]
+    public function onPreUpdate(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     /**

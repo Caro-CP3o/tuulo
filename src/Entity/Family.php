@@ -6,10 +6,12 @@ use App\Repository\FamilyRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: FamilyRepository::class)]
-#[ORM\Table(uniqueConstraints: [new ORM\UniqueConstraint(name: 'UNIQ_JOIN_CODE', columns: ['joinCode'])])]
+#[ORM\Table(uniqueConstraints: [['name' => 'UNIQ_JOIN_CODE', 'columns' => ['joinCode']]])]
+
 class Family
 {
     #[ORM\Id]
@@ -18,12 +20,18 @@ class Family
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom de votre famille est requis.")]
+    #[Assert\Length(max: 255, maxMessage: "Le nom de votre famille ne peut être supérieur à {{ limit }} caractères.")]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $coverImage = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(
+        max: 2000,
+        maxMessage: "La description ne peut pas excéder {{ limit }} caractères."
+    )]
     private ?string $description = null;
 
     #[ORM\Column(length: 10, nullable: true)]
