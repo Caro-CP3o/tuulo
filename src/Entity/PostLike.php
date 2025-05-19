@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: PostLikeRepository::class)]
 #[ORM\Table]
 #[ORM\UniqueConstraint(name: 'user_post_unique', columns: ['user_id', 'post_id'])]
+#[ORM\HasLifecycleCallbacks]
 class PostLike
 {
     #[ORM\Id]
@@ -25,6 +26,12 @@ class PostLike
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\PrePersist]
+    public function onPrePersist(): void
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {

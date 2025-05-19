@@ -14,7 +14,7 @@ class FamilyMember
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'familyMembers')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'familyMembers')]
@@ -23,6 +23,48 @@ class FamilyMember
 
     #[ORM\Column]
     private ?\DateTimeImmutable $joinedAt = null;
+
+    // pending, approved, active, rejected
+    #[ORM\Column(length: 20)]
+    private string $status = 'pending';
+
+    #[ORM\Column(length: 180, nullable: true)]
+    private ?string $email = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $token = null;
+
+    public function getToken(): ?string
+    {
+        return $this->token;
+    }
+
+    public function setToken(?string $token): self
+    {
+        $this->token = $token;
+        return $this;
+    }
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(?string $email): self
+    {
+        $this->email = $email;
+        return $this;
+    }
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
+        return $this;
+    }
+
 
     public function __construct()
     {

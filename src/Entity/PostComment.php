@@ -7,31 +7,40 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PostCommentRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class PostComment
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['comment:read', 'comment:write'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'postComments')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['comment:read', 'comment:write'])]
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'postComments')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['comment:read', 'comment:write'])]
     private ?Post $post = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'replies')]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['comment:read'])]
     private ?self $parent = null;
 
     /**
      * @var Collection<int, self>
      */
     #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent')]
+    #[ORM\OrderBy(['createdAt' => 'ASC'])]
+    #[Groups(['comment:read'])]
     private Collection $replies;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -42,18 +51,35 @@ class PostComment
         minMessage: "Le commentaire est trop court.",
         maxMessage: "Le commentaire ne peut pas dépasser {{ limit }} caractères."
     )]
+    #[Groups(['comment:read', 'comment:write'])]
     private ?string $content = null;
 
     #[ORM\Column]
+    #[Groups(['comment:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $updated = null;
+    #[ORM\Column]
+    #[Groups(['comment:read'])]
+    private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()
     {
         $this->replies = new ArrayCollection();
     }
+    #[ORM\PrePersist]
+    public function onPrePersist(): void
+    {
+        $now = new \DateTimeImmutable();
+        $this->createdAt = $now;
+        $this->updatedAt = $now;
+    }
+
+    #[ORM\PreUpdate]
+    public function onPreUpdate(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
 
     public function getId(): ?int
     {
@@ -150,14 +176,15 @@ class PostComment
         return $this;
     }
 
-    public function getUpdated(): ?string
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
     {
-        return $this->updated;
+        return $this->updatedAt;
     }
 
-    public function setUpdated(string $updated): static
+    public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
-        $this->updated = $updated;
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }
