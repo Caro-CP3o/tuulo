@@ -7,24 +7,35 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Validator\Constraints as Assert;
+use ApiPlatform\Metadata\ApiResource;
+
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: FamilyRepository::class)]
-#[ORM\Table(uniqueConstraints: [['name' => 'UNIQ_JOIN_CODE', 'columns' => ['joinCode']]])]
+#[ORM\Table(uniqueConstraints: [new ORM\UniqueConstraint(name: 'UNIQ_JOIN_CODE', columns: ['joinCode'])])]
+
+#[ApiResource(
+    denormalizationContext: ['groups' => ['family:write']],
+    normalizationContext: ['groups' => ['family:read']],
+)]
 
 class Family
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['family:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "Le nom de votre famille est requis.")]
     #[Assert\Length(max: 255, maxMessage: "Le nom de votre famille ne peut être supérieur à {{ limit }} caractères.")]
+    #[Groups(['family:write', 'family:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['family:write', 'family:read'])]
     private ?string $coverImage = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -32,23 +43,42 @@ class Family
         max: 2000,
         maxMessage: "La description ne peut pas excéder {{ limit }} caractères."
     )]
+    #[Groups(['family:write', 'family:read'])]
     private ?string $description = null;
 
     #[ORM\Column(length: 10, nullable: true)]
+    #[Groups(['family:read'])]
     private ?string $joinCode = null;
 
     /**
      * @var Collection<int, FamilyMember>
      */
     #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'family', orphanRemoval: true)]
+    #[Groups(['family:read'])]
     private Collection $familyMembers;
 
     /**
      * @var Collection<int, Post>
      */
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'family')]
+    #[Groups(['family:read'])]
     private Collection $posts;
 
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[Groups(['family:write', 'family:read'])]
+    private ?User $creator = null;
+
+    public function getCreator(): ?User
+    {
+        return $this->creator;
+    }
+
+    public function setCreator(?User $creator): static
+    {
+        $this->creator = $creator;
+
+        return $this;
+    }
     public function __construct()
     {
         $this->familyMembers = new ArrayCollection();

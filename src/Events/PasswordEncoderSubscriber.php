@@ -38,11 +38,6 @@ class PasswordEncoderSubscriber implements EventSubscriberInterface
         $hash = $this->encoder->hashPassword($user, $user->getPassword());
         $user->setPassword($hash);
 
-        // Generate 6-digit verification code
-        // $code = random_int(100000, 999999);
-        // $user->setEmailVerificationCode((string) $code);
-        // $user->setIsVerified(false);
-
         if (!$user->isVerified()) {
             $code = random_int(100000, 999999);
             $user->setEmailVerificationCode((string) $code);

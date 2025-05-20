@@ -1,23 +1,5 @@
 <?php
 
-// namespace App\Controller;
-
-// use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-// use Symfony\Component\HttpFoundation\Response;
-// use Symfony\Component\Routing\Attribute\Route;
-
-// final class RegisterViaInviteController extends AbstractController
-// {
-//     #[Route('/register/via/invite', name: 'app_register_via_invite')]
-//     public function index(): Response
-//     {
-//         return $this->render('register_via_invite/index.html.twig', [
-//             'controller_name' => 'RegisterViaInviteController',
-//         ]);
-//     }
-// }
-
-
 namespace App\Controller;
 
 use App\Entity\User;
@@ -27,16 +9,19 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Service\EmailVerificationMailer;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class RegisterViaInviteController extends AbstractController
 {
+
     #[Route('/api/register', name: 'register_via_invite', methods: ['POST'])]
     public function register(
         Request $request,
         FamilyMemberRepository $memberRepo,
         EntityManagerInterface $em,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        EmailVerificationMailer $mailer
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $token = $data['token'] ?? null;
@@ -53,10 +38,23 @@ final class RegisterViaInviteController extends AbstractController
             return new JsonResponse(['error' => 'Invalid or expired token.'], 404);
         }
 
+        if ($member->getUser()) {
+            return new JsonResponse(['error' => 'Token already used.'], 409);
+        }
+
         // Create user
         $user = new User();
         $user->setEmail($email);
         $user->setPassword($passwordHasher->hashPassword($user, $password));
+
+        if (!$user->isVerified()) {
+            $code = random_int(100000, 999999);
+            $user->setEmailVerificationCode((string) $code);
+            $user->setIsVerified(false);
+
+            // Send the email
+            $mailer->sendVerificationCode($user);
+        }
 
         $em->persist($user);
 
@@ -66,8 +64,7 @@ final class RegisterViaInviteController extends AbstractController
 
         $em->flush();
 
-        // Optionally trigger email verification here...
-
+        // message be go check your emails ?
         return new JsonResponse(['message' => 'Registration complete.']);
     }
 }

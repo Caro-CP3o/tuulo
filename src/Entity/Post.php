@@ -7,23 +7,32 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
+use ApiPlatform\Metadata\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 #[ORM\HasLifecycleCallbacks]
+#[ApiResource(
+    normalizationContext: ['groups' => ['post:read']],
+    denormalizationContext: ['groups' => ['post:write']],
+)]
 class Post
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['post:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['user:read', 'post:read'])]
     private ?User $author = null;
 
     #[ORM\ManyToOne(inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['post:read', 'post:write'])]
     private ?Family $family = null;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -34,6 +43,7 @@ class Post
         minMessage: "Le contenu ne peut pas être vide.",
         maxMessage: "Le contenu est trop long. Il doit faire au maximum {{ limit }} caractères."
     )]
+    #[Groups(['post:read', 'post:write'])]
     private ?string $content = null;
 
     #[ORM\Column(length: 255)]
@@ -42,30 +52,37 @@ class Post
         max: 255,
         maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères."
     )]
+    #[Groups(['post:read', 'post:write'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['post:read', 'post:write'])]
     private ?string $image = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['post:read', 'post:write'])]
     private ?string $video = null;
 
     #[ORM\Column]
+    #[Groups(['post:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Groups(['post:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**
      * @var Collection<int, PostLike>
      */
     #[ORM\OneToMany(targetEntity: PostLike::class, mappedBy: 'post', orphanRemoval: true)]
+    #[Groups(['post:read'])]
     private Collection $postLikes;
 
     /**
      * @var Collection<int, PostComment>
      */
     #[ORM\OneToMany(targetEntity: PostComment::class, mappedBy: 'post')]
+    #[Groups(['post:read'])]
     private Collection $postComments;
 
     public function __construct()

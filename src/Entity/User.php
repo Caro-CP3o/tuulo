@@ -45,12 +45,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre prénom')]
     #[Groups(['user:read', 'user:write'])]
-    private ?string $firstname = null;
+    private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre nom de famille')]
     #[Groups(['user:read', 'user:write'])]
-    private ?string $lastname = null;
+    private ?string $lastName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['user:read', 'user:write'])]
@@ -81,34 +81,51 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private array $roles = ['ROLE_USER'];
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['user:read'])]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['user:read'])]
     private ?\DateTimeInterface $updatedAt = null;
 
     /**
      * @var Collection<int, FamilyMember>
      */
     #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'user')]
+    #[Groups(['user:read'])]
     private Collection $familyMembers;
 
     /**
      * @var Collection<int, Post>
      */
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'author')]
+    #[Groups(['user:read'])]
     private Collection $posts;
 
     /**
      * @var Collection<int, PostLike>
      */
     #[ORM\OneToMany(targetEntity: PostLike::class, mappedBy: 'user', orphanRemoval: true)]
+    #[Groups(['user:read'])]
     private Collection $postLikes;
 
     /**
      * @var Collection<int, PostComment>
      */
     #[ORM\OneToMany(targetEntity: PostComment::class, mappedBy: 'user')]
+    #[Groups(['user:read'])]
     private Collection $postComments;
+
+    #[ORM\Column(type: 'boolean')]
+    #[Groups(['user:read'])]
+    private bool $isVerified = false;
+
+    #[ORM\Column(type: 'string', length: 6, nullable: true)]
+    private ?string $emailVerificationCode = null;
+
+    #[ORM\Column(type: 'string', length: 20, options: ['default' => 'step1'])]
+    #[Groups(['user:read', 'user:write'])]
+    private string $registrationStep = 'step1';
 
     public function __construct()
     {
@@ -118,20 +135,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->postComments = new ArrayCollection();
     }
 
-    // private UserPasswordHasherInterface $passwordHasher;
+    public function getRegistrationStep(): string
+    {
+        return $this->registrationStep;
+    }
 
-    // public function __construct(UserPasswordHasherInterface $passwordHasher)
-    // {
-    //     $this->passwordHasher = $passwordHasher;
-    // }
-
-
-    #[ORM\Column(type: 'boolean')]
-    #[Groups(['user:read'])]
-    private bool $isVerified = false;
-
-    #[ORM\Column(type: 'string', length: 6, nullable: true)]
-    private ?string $emailVerificationCode = null;
+    public function setRegistrationStep(string $step): self
+    {
+        $this->registrationStep = $step;
+        return $this;
+    }
 
     public function isVerified(): bool
     {
@@ -158,7 +171,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getFullName(): string
     {
-        return $this->firstname . ' ' . $this->lastname;
+        return $this->firstName . ' ' . $this->lastName;
     }
 
     public function getId(): ?int
@@ -188,10 +201,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string) $this->email;
     }
 
-    public function getUsername(): string
-    {
-        return $this->email;
-    }
+    // public function getUsername(): string
+    // {
+    //     return $this->email;
+    // }
 
     public function getPassword(): ?string
     {
@@ -214,26 +227,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // $this->plainPassword = null;
     }
 
-    public function getFirstname(): ?string
+    public function getFirstName(): ?string
     {
-        return $this->firstname;
+        return $this->firstName;
     }
 
-    public function setFirstname(string $firstname): static
+    public function setFirstName(string $firstName): static
     {
-        $this->firstname = $firstname;
+        $this->firstName = $firstName;
 
         return $this;
     }
 
-    public function getLastname(): ?string
+    public function getLastName(): ?string
     {
-        return $this->lastname;
+        return $this->lastName;
     }
 
-    public function setLastname(string $lastname): static
+    public function setLastName(string $lastName): static
     {
-        $this->lastname = $lastname;
+        $this->lastName = $lastName;
 
         return $this;
     }
@@ -311,7 +324,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->slug) {
             $slugify = new Slugify();
-            $this->slug = $slugify->slugify($this->firstname . ' ' . $this->lastname . ' ' . uniqid());
+            $this->slug = $slugify->slugify($this->firstName . ' ' . $this->lastName . ' ' . uniqid());
         }
     }
 
@@ -447,4 +460,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    // public function setCreatedAt(\DateTimeInterface $createdAt): static
+// {
+//     $this->createdAt = $createdAt;
+
+    //     return $this;
+// }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+
+    // public function setUpdatedAt(\DateTimeInterface $updatedAt): static
+// {
+//     $this->updatedAt = $updatedAt;
+
+    //     return $this;
+// }
 }
