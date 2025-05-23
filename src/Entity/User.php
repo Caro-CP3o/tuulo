@@ -123,12 +123,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private bool $isVerified = false;
 
-    #[ORM\Column(type: 'string', length: 6, nullable: true)]
+    #[ORM\Column(type: 'string', length: 64, nullable: true)]
     private ?string $emailVerificationCode = null;
 
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
     #[Groups(['user:read', 'user:write'])]
     private ?string $registrationStep = null;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Groups(['user:read'])]
+    private ?\DateTimeInterface $emailVerificationExpiresAt = null;
+
+    public function getEmailVerificationExpiresAt(): ?\DateTimeInterface
+    {
+        return $this->emailVerificationExpiresAt;
+    }
+
+    public function setEmailVerificationExpiresAt(?\DateTimeInterface $dateTime): self
+    {
+        $this->emailVerificationExpiresAt = $dateTime;
+        return $this;
+    }
 
     public function __construct()
     {
