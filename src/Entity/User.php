@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
+// use App\Dto\UserRegistrationOutput;
 use Cocur\Slugify\Slugify;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -19,7 +20,8 @@ use ApiPlatform\Metadata\ApiProperty;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
     normalizationContext: ['groups' => ['user:read']],
-    denormalizationContext: ['groups' => ['user:write']]
+    denormalizationContext: ['groups' => ['user:write']],
+    // output: UserRegistrationOutput::class,
 )]
 #[ORM\HasLifecycleCallbacks]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -58,6 +60,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Assert\LessThanOrEqual(value: '-13 years', message: 'Vous devez avoir minimum 13 ans pour vous inscrire')]
+    #[Assert\NotBlank(message: "La date de naissance est obligatoire")]
     #[Groups(['user:read', 'user:write'])]
     private ?\DateTimeInterface $birthDate = null;
 
@@ -123,9 +126,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 6, nullable: true)]
     private ?string $emailVerificationCode = null;
 
-    #[ORM\Column(type: 'string', length: 20, options: ['default' => 'step1'])]
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
     #[Groups(['user:read', 'user:write'])]
-    private string $registrationStep = 'step1';
+    private ?string $registrationStep = null;
 
     public function __construct()
     {

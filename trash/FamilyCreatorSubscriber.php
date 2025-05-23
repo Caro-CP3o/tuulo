@@ -73,6 +73,7 @@ class FamilyCreatorSubscriber implements EventSubscriberInterface
 
         }
 
+        $user->setRegistrationStep('DONE');
         // Create FamilyMember link
         $familyMember = new FamilyMember();
         $familyMember->setFamily($family);

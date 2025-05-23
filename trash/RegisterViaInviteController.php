@@ -32,6 +32,18 @@ final class RegisterViaInviteController extends AbstractController
             return new JsonResponse(['error' => 'Missing data.'], 400);
         }
 
+        // Validate email format
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return new JsonResponse(['error' => 'Invalid email format.'], 400);
+        }
+
+        // Check if email is already in use
+        $existingUser = $em->getRepository(User::class)->findOneBy(['email' => $email]);
+        if ($existingUser) {
+            return new JsonResponse(['error' => 'Email already in use.'], 409);
+            // redirect to login page ??
+        }
+
         $member = $memberRepo->findOneBy(['token' => $token, 'status' => 'approved']);
 
         if (!$member) {
@@ -47,14 +59,14 @@ final class RegisterViaInviteController extends AbstractController
         $user->setEmail($email);
         $user->setPassword($passwordHasher->hashPassword($user, $password));
 
-        if (!$user->isVerified()) {
-            $code = random_int(100000, 999999);
-            $user->setEmailVerificationCode((string) $code);
-            $user->setIsVerified(false);
 
-            // Send the email
-            $mailer->sendVerificationCode($user);
-        }
+        $code = random_int(100000, 999999);
+        $user->setEmailVerificationCode((string) $code);
+        $user->setIsVerified(false);
+
+        // Send the email
+        $mailer->sendVerificationCode($user);
+
 
         $em->persist($user);
 
