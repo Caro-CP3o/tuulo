@@ -68,6 +68,12 @@ class Family
     #[Groups(['family:write', 'family:read'])]
     private ?User $creator = null;
 
+    /**
+     * @var Collection<int, FamilyInvitation>
+     */
+    #[ORM\OneToMany(targetEntity: FamilyInvitation::class, mappedBy: 'family', orphanRemoval: true)]
+    private Collection $familyInvitations;
+
     public function getCreator(): ?User
     {
         return $this->creator;
@@ -83,6 +89,7 @@ class Family
     {
         $this->familyMembers = new ArrayCollection();
         $this->posts = new ArrayCollection();
+        $this->familyInvitations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -192,6 +199,36 @@ class Family
             // set the owning side to null (unless already changed)
             if ($post->getFamily() === $this) {
                 $post->setFamily(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, FamilyInvitation>
+     */
+    public function getFamilyInvitations(): Collection
+    {
+        return $this->familyInvitations;
+    }
+
+    public function addFamilyInvitation(FamilyInvitation $familyInvitation): static
+    {
+        if (!$this->familyInvitations->contains($familyInvitation)) {
+            $this->familyInvitations->add($familyInvitation);
+            $familyInvitation->setFamily($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFamilyInvitation(FamilyInvitation $familyInvitation): static
+    {
+        if ($this->familyInvitations->removeElement($familyInvitation)) {
+            // set the owning side to null (unless already changed)
+            if ($familyInvitation->getFamily() === $this) {
+                $familyInvitation->setFamily(null);
             }
         }
 

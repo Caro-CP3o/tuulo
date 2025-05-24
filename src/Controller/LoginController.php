@@ -2,17 +2,61 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Authentication\AuthenticatorManagerInterface;
+use Symfony\Component\Security\Http\Authentication\AuthenticatorInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
-final class LoginController extends AbstractController
+use App\Entity\User;
+use App\Repository\UserRepository;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+
+class LoginController
 {
-    #[Route('/login', name: 'app_login')]
-    public function index(): Response
-    {
-        return $this->render('login/index.html.twig', [
-            'controller_name' => 'LoginController',
-        ]);
+    #[Route('/api/login', name: 'app_login', methods: ['POST'])]
+    public function login(
+        Request $request,
+        JWTTokenManagerInterface $jwtManager,
+        UserRepository $userRepository,
+        UserPasswordHasherInterface $hasher
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+
+        $user = $userRepository->findOneBy(['email' => $data['email']]);
+
+        if (!$user->isVerified()) {
+            return new JsonResponse(['error' => 'Email not verified'], 403);
+        }
+
+        if (!$user || !$hasher->isPasswordValid($user, $data['password'])) {
+            return new JsonResponse(['error' => 'Invalid credentials'], 401);
+        }
+
+        $jwt = $jwtManager->create($user);
+
+
+        $cookie = new Cookie(
+            name: 'BEARER',
+            value: $jwt,
+            expire: time() + 3600,
+            path: '/',
+            domain: null,
+            secure: false, // Set to true in production (HTTPS)
+            httpOnly: true,
+            raw: false,
+            sameSite: Cookie::SAMESITE_LAX
+        );
+
+        $response = new JsonResponse(['message' => 'Login successful']);
+        $response->headers->setCookie($cookie);
+
+        return $response;
     }
 }
+
