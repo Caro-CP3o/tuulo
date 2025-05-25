@@ -14,6 +14,15 @@ services:
         resource: '../src/Events'
         tags: ['kernel.event_subscriber']
     App\Controller\EmailVerificationController: ~
+    
+    App\Security\CookieTokenExtractor:
+        arguments:
+            $cookieName: 'BEARER'
+        tags:
+            - { name: 'lexik_jwt_authentication.token_extractor', priority: -10 }
+
+    App\Controller\CreateMediaObjectActionController:
+        tags: ['controller.service_arguments']
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

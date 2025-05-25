@@ -4,34 +4,47 @@ namespace App\Entity;
 
 use App\Repository\FamilyMemberRepository;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: FamilyMemberRepository::class)]
+#[ApiResource(
+    normalizationContext: ['groups' => ['familyMember:read']],
+    denormalizationContext: ['groups' => ['familyMember:write']],
+)]
 class FamilyMember
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['familyMember:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'familyMembers')]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['familyMember:read', 'familyMember:write'])]
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'familyMembers')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['familyMember:read', 'familyMember:write'])]
     private ?Family $family = null;
 
     #[ORM\Column]
+    #[Groups(['familyMember:read'])]
     private ?\DateTimeImmutable $joinedAt = null;
 
     // pending, approved, active, rejected
     #[ORM\Column(length: 20)]
+    #[Groups(['familyMember:read', 'familyMember:write'])]
     private string $status = 'pending';
 
     #[ORM\Column(length: 180, nullable: true)]
+    #[Groups(['familyMember:read', 'familyMember:write'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['familyMember:write'])]
     private ?string $token = null;
 
     public function getToken(): ?string

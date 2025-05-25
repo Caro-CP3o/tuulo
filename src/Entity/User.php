@@ -4,10 +4,14 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
+use App\Repository\PostRepository;
+use App\Repository\PostCommentRepository;
+
 // use App\Dto\UserRegistrationOutput;
 use Cocur\Slugify\Slugify;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\GetCollection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -16,12 +20,30 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\ApiProperty;
+// use ApiPlatform\Metadata\ApiResource;
+// use ApiPlatform\Metadata\GetCollection;
+// use ApiPlatform\Metadata\Post;
+// use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
+// use Symfony\Component\Serializer\Annotation\Groups;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
     normalizationContext: ['groups' => ['user:read']],
     denormalizationContext: ['groups' => ['user:write']],
+
+    // uriTemplate: '/register',
+    // inputFormats: ['multipart' => ['multipart/form-data']],
     // output: UserRegistrationOutput::class,
+    // types: ['https://schema.org/Book'],
+    // operations: [
+    //     new GetCollection(),
+    //     new Post(
+    //         outputFormats: ['jsonld' => ['application/ld+json']],
+    //         inputFormats: ['multipart' => ['multipart/form-data']]
+    //     )
+    // ]
 )]
 #[ORM\HasLifecycleCallbacks]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -31,12 +53,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'family:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
     #[Assert\Email(message: 'Veuillez renseigner un email valide')]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'family:read'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
@@ -46,12 +68,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre prénom')]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'family:read'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre nom de famille')]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'family:read'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -64,11 +86,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read', 'user:write'])]
     private ?\DateTimeInterface $birthDate = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Assert\Image(mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'], mimeTypesMessage: 'Vous devez uploader un fichier jpg, jpeg, png ou gif')]
-    #[Assert\File(maxSize: '1024k', maxSizeMessage: 'La taille du fichier est trop grande')]
+    // #[ORM\Column(length: 255, nullable: true)]
+    // #[Assert\Image(mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'], mimeTypesMessage: 'Vous devez uploader un fichier jpg, jpeg, png ou gif')]
+    // #[Assert\File(maxSize: '1024k', maxSizeMessage: 'La taille du fichier est trop grande')]
+    // #[Groups(['user:read', 'user:write'])]
+    // private ?string $avatar = null;
+    #[ORM\ManyToOne(targetEntity: MediaObject::class)]
+    #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
+    #[ORM\JoinColumn(nullable: true)]
     #[Groups(['user:read', 'user:write'])]
-    private ?string $avatar = null;
+    public ?MediaObject $avatar = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Vous devez choisir une couleur')]
@@ -95,7 +122,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, FamilyMember>
      */
     #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'user')]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'user:write', 'family:write', 'family:read'])]
     private Collection $familyMembers;
 
     /**
@@ -296,12 +323,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getAvatar(): ?string
+    // public function getAvatar(): ?string
+    // {
+    //     return $this->avatar;
+    // }
+
+    // public function setAvatar(?string $avatar): static
+    // {
+    //     $this->avatar = $avatar;
+
+    //     return $this;
+    // }
+    public function getAvatar(): ?MediaObject
     {
         return $this->avatar;
     }
 
-    public function setAvatar(?string $avatar): static
+    public function setAvatar(?MediaObject $avatar): static
     {
         $this->avatar = $avatar;
 

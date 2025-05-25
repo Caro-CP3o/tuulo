@@ -4,6 +4,7 @@ api_platform:
     formats:
         jsonld: ['application/ld+json']
         json: ['application/json']
+        multipart: ['multipart/form-data']
     patch_formats:
         json: ['application/merge-patch+json']
         jsonapi: ['application/vnd.api+json']

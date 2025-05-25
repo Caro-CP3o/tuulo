@@ -65,13 +65,14 @@ class Family
     private Collection $posts;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[Groups(['family:write', 'family:read'])]
+    #[Groups(['family:read', 'family:write'])]
     private ?User $creator = null;
 
     /**
      * @var Collection<int, FamilyInvitation>
      */
     #[ORM\OneToMany(targetEntity: FamilyInvitation::class, mappedBy: 'family', orphanRemoval: true)]
+    #[Groups(['family:read', 'family:write'])]
     private Collection $familyInvitations;
 
     public function getCreator(): ?User

@@ -27,13 +27,13 @@ class CreateFamilyController extends AbstractController
 
         // /** @var User $user */
         // $user = $this->getUser();
-        // if (!$user || !$user->isVerified()) {
-        //     return $this->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
-        // }
 
         /** @var User $user */
         $user = $tokenStorage->getToken()?->getUser();
 
+        if (!$user || !$user->isVerified()) {
+            return $this->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
         if (!$user || !$user instanceof User) {
             return new JsonResponse(['error' => 'Unauthorized'], 401);
         }
@@ -74,6 +74,15 @@ class CreateFamilyController extends AbstractController
         $em->persist($family);
         $em->persist($member);
         $em->persist($user);
+
+        dd([
+            'user_id' => $user->getId(),
+            'family_creator_id' => $family->getCreator()?->getId(),
+            'member_user_id' => $member->getUser()?->getId(),
+            'member_family_id' => $member->getFamily()?->getId(),
+            'user_family_members' => $user->getFamilyMembers()->count(),
+            'family_family_members' => $family->getFamilyMembers()->count(),
+        ]);
 
         $em->flush();
 
