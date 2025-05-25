@@ -113,10 +113,11 @@ class MediaObject
     private ?string $filePath = null;
 
     #[ORM\Column(type: 'datetime')]
+    #[Groups(['media_object:read'])]
     private \DateTimeInterface $updatedAt;
 
     #[ApiProperty(types: ['https://schema.org/contentUrl'], writable: false)]
-    #[Groups(['media_object:read'])]
+    #[Groups(['media_object:read', 'media_object:write'])]
     #[SerializedName('contentUrl')]
     public function getContentUrl(): ?string
     {
@@ -124,6 +125,11 @@ class MediaObject
     }
 
     public function __construct()
+    {
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+    #[ORM\PreUpdate]
+    public function onPreUpdate(): void
     {
         $this->updatedAt = new \DateTimeImmutable();
     }
