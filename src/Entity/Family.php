@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\ApiResource;
 
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: FamilyRepository::class)]
 #[ORM\Table(uniqueConstraints: [new ORM\UniqueConstraint(name: 'UNIQ_JOIN_CODE', columns: ['joinCode'])])]
@@ -55,6 +56,7 @@ class Family
      */
     #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'family', orphanRemoval: true)]
     #[Groups(['family:read'])]
+    #[MaxDepth(1)]
     private Collection $familyMembers;
 
     /**
@@ -62,10 +64,12 @@ class Family
      */
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'family')]
     #[Groups(['family:read'])]
+    #[MaxDepth(1)]
     private Collection $posts;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[Groups(['family:read', 'family:write'])]
+    #[MaxDepth(1)]
     private ?User $creator = null;
 
     /**
@@ -73,6 +77,7 @@ class Family
      */
     #[ORM\OneToMany(targetEntity: FamilyInvitation::class, mappedBy: 'family', orphanRemoval: true)]
     #[Groups(['family:read', 'family:write'])]
+    #[MaxDepth(1)]
     private Collection $familyInvitations;
 
     public function getCreator(): ?User

@@ -25,6 +25,7 @@ use ApiPlatform\Metadata\ApiProperty;
 // use ApiPlatform\Metadata\Post;
 // use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 // use Symfony\Component\Serializer\Annotation\Groups;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
@@ -63,6 +64,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "Le mot de passe est obligatoire")]
+    #[Assert\Length(min: 8, max: 4096)]
+    #[Assert\Regex(
+        pattern: '/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^\w\s]).+$/',
+        message: 'Votre mot de passe doit contenir au minimum: 1 majuscule, 1 minuscule, 1 chiffre et 1 caractère spécial.'
+    )]
     #[Groups(['user:write'])]
     private ?string $password = null;
 
@@ -123,6 +129,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'user')]
     #[Groups(['user:read', 'user:write', 'family:write', 'family:read'])]
+    #[MaxDepth(1)]
     private Collection $familyMembers;
 
     /**
@@ -130,6 +137,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'author')]
     #[Groups(['user:read'])]
+    #[MaxDepth(1)]
     private Collection $posts;
 
     /**
@@ -137,6 +145,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: PostLike::class, mappedBy: 'user', orphanRemoval: true)]
     #[Groups(['user:read'])]
+    #[MaxDepth(1)]
     private Collection $postLikes;
 
     /**
@@ -144,6 +153,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: PostComment::class, mappedBy: 'user')]
     #[Groups(['user:read'])]
+    #[MaxDepth(1)]
     private Collection $postComments;
 
     #[ORM\Column(type: 'boolean')]

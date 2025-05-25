@@ -13,7 +13,9 @@ api_platform:
         jsonopenapi: ['application/vnd.openapi+json']
         html: ['text/html']
     defaults:
-        # pagination_enabled: false
+        pagination_enabled: false
+        normalization_context:
+            enable_max_depth: true
         # pagination_items_per_page: 30
         # pagination_client_enabled: true
         # pagination_client_items_per_page: true
@@ -24,3 +26,5 @@ api_platform:
         pagination:
             items_per_page_parameter_name: 'count'
     use_symfony_listeners: true
+    eager_loading:
+        max_joins: 50
