@@ -8,7 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Validator\Constraints as Assert;
 use ApiPlatform\Metadata\ApiResource;
-
+use ApiPlatform\Metadata\ApiProperty;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
@@ -17,8 +17,8 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
 #[ORM\Table(uniqueConstraints: [new ORM\UniqueConstraint(name: 'UNIQ_JOIN_CODE', columns: ['joinCode'])])]
 
 #[ApiResource(
-    denormalizationContext: ['groups' => ['family:write']],
     normalizationContext: ['groups' => ['family:read']],
+    denormalizationContext: ['groups' => ['family:write']],
 )]
 
 class Family
@@ -35,9 +35,12 @@ class Family
     #[Groups(['family:write', 'family:read'])]
     private ?string $name = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['family:write', 'family:read'])]
-    private ?string $coverImage = null;
+    // #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\ManyToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',])]
+    #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['family:write', 'family:read', 'media_object:read'])]
+    private ?MediaObject $coverImage = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Length(
@@ -114,18 +117,27 @@ class Family
 
         return $this;
     }
-
-    public function getCoverImage(): ?string
+    public function getCoverImage(): ?MediaObject
     {
         return $this->coverImage;
     }
 
-    public function setCoverImage(?string $coverImage): static
+    public function setCoverImage(?MediaObject $coverImage): self
     {
         $this->coverImage = $coverImage;
-
         return $this;
     }
+    // public function getCoverImage(): ?string
+    // {
+    //     return $this->coverImage;
+    // }
+
+    // public function setCoverImage(?string $coverImage): static
+    // {
+    //     $this->coverImage = $coverImage;
+
+    //     return $this;
+    // }
 
     public function getDescription(): ?string
     {

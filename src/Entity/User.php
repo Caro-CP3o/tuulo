@@ -4,10 +4,6 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
-use App\Repository\PostRepository;
-use App\Repository\PostCommentRepository;
-
-// use App\Dto\UserRegistrationOutput;
 use Cocur\Slugify\Slugify;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -20,31 +16,13 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\ApiProperty;
-// use ApiPlatform\Metadata\ApiResource;
-// use ApiPlatform\Metadata\GetCollection;
-// use ApiPlatform\Metadata\Post;
-// use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
-// use Symfony\Component\Serializer\Annotation\Groups;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
     normalizationContext: ['groups' => ['user:read']],
     denormalizationContext: ['groups' => ['user:write']],
-
-    // uriTemplate: '/register',
-    // inputFormats: ['multipart' => ['multipart/form-data']],
-    // output: UserRegistrationOutput::class,
-    // types: ['https://schema.org/Book'],
-    // operations: [
-    //     new GetCollection(),
-    //     new Post(
-    //         outputFormats: ['jsonld' => ['application/ld+json']],
-    //         inputFormats: ['multipart' => ['multipart/form-data']]
-    //     )
-    // ]
 )]
 #[ORM\HasLifecycleCallbacks]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -97,7 +75,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // #[Assert\File(maxSize: '1024k', maxSizeMessage: 'La taille du fichier est trop grande')]
     // #[Groups(['user:read', 'user:write'])]
     // private ?string $avatar = null;
-    #[ORM\ManyToOne(targetEntity: MediaObject::class)]
+    #[ORM\ManyToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',])]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true)]
     #[Groups(['user:read', 'user:write', 'media_object:read'])]

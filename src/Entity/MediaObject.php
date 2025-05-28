@@ -5,6 +5,7 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
 use App\Repository\MediaObjectRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
@@ -28,6 +29,9 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
         new Get(),
         new GetCollection(),
         // new Post(),
+        // new Delete(security: "is_granted('MEDIA_OBJECT_DELETE', object)"),
+        // new Delete(security: "is_granted('ROLE_USER')"),
+        new Delete(),
         new Post(
             controller: CreateMediaObjectActionController::class,
             inputFormats: ['multipart' => ['multipart/form-data']],
@@ -117,7 +121,7 @@ class MediaObject
     private \DateTimeInterface $updatedAt;
 
     #[ApiProperty(types: ['https://schema.org/contentUrl'], writable: false)]
-    #[Groups(['media_object:read', 'media_object:write', 'user:read'])]
+    #[Groups(['media_object:read', 'media_object:write', 'user:read', 'family:read'])]
     #[SerializedName('contentUrl')]
     public function getContentUrl(): ?string
     {
