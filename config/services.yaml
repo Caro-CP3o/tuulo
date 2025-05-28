@@ -24,6 +24,10 @@ services:
     App\Controller\CreateMediaObjectActionController:
         tags: ['controller.service_arguments']
 
+    App\Events\MediaObjectDeletionSubscriber:
+        tags:
+            - { name: doctrine.event_subscriber }
+
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
