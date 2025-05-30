@@ -8,7 +8,7 @@ class CookieTokenExtractor implements TokenExtractorInterface
 {
     private string $cookieName;
 
-    public function __construct(string $cookieName = 'BEARER')
+    public function __construct(string $cookieName = 'token')
     {
         $this->cookieName = $cookieName;
     }

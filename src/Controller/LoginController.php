@@ -81,7 +81,7 @@ class LoginController extends AbstractController
             $jwt = $jwtManager->create($user);
 
             $cookie = new Cookie(
-                name: 'BEARER',
+                name: 'token',
                 value: $jwt,
                 expire: 0,
                 path: '/',

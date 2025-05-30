@@ -17,7 +17,7 @@ services:
     
     App\Security\CookieTokenExtractor:
         arguments:
-            $cookieName: 'BEARER'
+            $cookieName: 'token'
         tags:
             - { name: 'lexik_jwt_authentication.token_extractor', priority: -10 }
 

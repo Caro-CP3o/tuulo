@@ -18,4 +18,4 @@ lexik_jwt_authentication:
     token_extractors:
         cookie:
             enabled: true
-            name: BEARER
+            name: token
