@@ -93,8 +93,8 @@ class LoginController extends AbstractController
 
             $response = new JsonResponse(['message' => 'Login successful']);
             $response->headers->setCookie($cookie);
-
             return $response;
+
         } catch (\Throwable $e) {
             return new JsonResponse([
                 'error' => 'Server error',

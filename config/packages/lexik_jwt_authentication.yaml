@@ -8,7 +8,7 @@ lexik_jwt_authentication:
         username_path: email
         password_path: security.credentials.password
     set_cookies:
-        BEARER:
+        token:
             path: /
             domain: '%env(FRONTEND_URL)%'
             httpOnly: true
