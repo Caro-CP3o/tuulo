@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 final class ProfileController extends AbstractController
 {
+
+
     // #[Route('/profile', name: 'app_profile')]
     // public function index(): Response
     // {
