@@ -9,6 +9,7 @@ use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiProperty;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
@@ -25,14 +26,18 @@ class Post
     #[Groups(['post:read'])]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'posts')]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['user:read', 'post:read'])]
+    #[Assert\NotNull]
+    // #[Groups(['user:read', 'post:read', 'post:write'])]
+    #[Groups(['post:read'])]
     private ?User $author = null;
 
-    #[ORM\ManyToOne(inversedBy: 'posts')]
+    #[ORM\ManyToOne(targetEntity: Family::class, inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['post:read', 'post:write'])]
+    #[Assert\NotNull]
+    #[Groups(['post:read'])]
+    // #[Groups(['post:read', 'post:write', 'family:read'])]
     private ?Family $family = null;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -55,13 +60,24 @@ class Post
     #[Groups(['post:read', 'post:write'])]
     private ?string $title = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['post:read', 'post:write'])]
-    private ?string $image = null;
+    // #[ORM\Column(length: 255, nullable: true)]
+    // #[Groups(['post:read', 'post:write'])]
+    // private ?string $image = null;
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: MediaObject::class, cascade: ['persist', 'remove',])]
+    #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['post:write', 'post:read', 'media_object:read'])]
+    private Collection $images;
+    // private ?MediaObject $image = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['post:read', 'post:write'])]
-    private ?string $video = null;
+    // #[ORM\Column(length: 255, nullable: true)]
+    // #[Groups(['post:read', 'post:write'])]
+    // private ?string $video = null;
+    #[ORM\ManyToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',])]
+    #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['post:write', 'post:read', 'media_object:read'])]
+    private ?MediaObject $video = null;
 
     #[ORM\Column]
     #[Groups(['post:read'])]
@@ -89,6 +105,7 @@ class Post
     {
         $this->postLikes = new ArrayCollection();
         $this->postComments = new ArrayCollection();
+        $this->images = new ArrayCollection();
     }
 
 
@@ -158,17 +175,40 @@ class Post
         return $this;
     }
 
-    public function getImage(): ?string
+    // public function getImage(): ?string
+    // {
+    //     return $this->image;
+    // }
+
+    // public function setImage(?string $image): static
+    // {
+    //     $this->image = $image;
+
+    //     return $this;
+    // }
+    /**
+     * @return Collection<int, MediaObject>
+     */
+    public function getImages(): Collection
     {
-        return $this->image;
+        return $this->images;
     }
 
-    public function setImage(?string $image): static
+    public function addImage(MediaObject $image): static
     {
-        $this->image = $image;
+        if (!$this->images->contains($image)) {
+            $this->images->add($image);
+        }
 
         return $this;
     }
+
+    public function removeImage(MediaObject $image): static
+    {
+        $this->images->removeElement($image);
+        return $this;
+    }
+
 
     public function getVideo(): ?string
     {

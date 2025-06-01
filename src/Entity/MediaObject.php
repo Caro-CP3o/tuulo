@@ -3,10 +3,11 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Post as ApiPost;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use App\Repository\MediaObjectRepository;
+use App\Repository\PostRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
@@ -20,6 +21,7 @@ use App\Controller\CreateMediaObjectActionController;
 use Symfony\Component\Serializer\Annotation\SerializedName;
 
 #[ORM\Entity(repositoryClass: MediaObjectRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 #[Vich\Uploadable]
 #[ApiResource(
     normalizationContext: ['groups' => ['media_object:read']],
@@ -28,11 +30,11 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
     operations: [
         new Get(),
         new GetCollection(),
-        // new Post(),
+        // new ApiPost(),
         // new Delete(security: "is_granted('MEDIA_OBJECT_DELETE', object)"),
         // new Delete(security: "is_granted('ROLE_USER')"),
         new Delete(),
-        new Post(
+        new ApiPost(
             controller: CreateMediaObjectActionController::class,
             inputFormats: ['multipart' => ['multipart/form-data']],
             validationContext: ['groups' => ['media_object_create']],
@@ -128,6 +130,35 @@ class MediaObject
         return $this->filePath ? '/media/' . $this->filePath : null;
     }
 
+    #[ORM\ManyToOne(targetEntity: Post::class, inversedBy: 'images')]
+    #[ORM\JoinColumn(onDelete: "CASCADE", nullable: true)]
+    #[Groups(['media_object:read', 'media_object:write'])]
+    private ?Post $post = null;
+
+    public function getPost(): ?Post
+    {
+        return $this->post;
+    }
+
+    public function setPost(?Post $post): static
+    {
+        $this->post = $post;
+        return $this;
+    }
+    // #[ORM\ManyToOne(targetEntity: Post::class, inversedBy: 'images')]
+    // #[ORM\JoinColumn(nullable: false)]
+    // private ?Post $post = null;
+
+    // public function getPost(): ?Post
+    // {
+    //     return $this->post;
+    // }
+
+    // public function setPost(?Post $post): self
+    // {
+    //     $this->post = $post;
+    //     return $this;
+    // }
     public function __construct()
     {
         $this->updatedAt = new \DateTimeImmutable();
