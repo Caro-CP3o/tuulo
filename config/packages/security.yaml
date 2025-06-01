@@ -55,12 +55,27 @@ security:
         # - { path: ^/profile, roles: ROLE_USER }
         # - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         # - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        # - { path: ^/api/login, roles: PUBLIC_ACCESS }
         # - { path: ^/api/customers, roles: IS_AUTHENTICATED_FULLY }
         # - { path: ^/api/invoices, roles: IS_AUTHENTICATED_FULLY }
-
-        
         # - { path: ^/api, roles: IS_AUTHENTICATED_FULLY, methods: [GET,PUT,PATCH,DELETE] }
+
+        # Public login endpoint (API)
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+
+        # Admin frontend area (only ROLE_ADMIN)
+        - { path: ^/admin, roles: ROLE_ADMIN }
+
+        # Family admin dashboard frontend (only ROLE_FAMILY_ADMIN)
+        - { path: ^/dashboard/family-admin, roles: ROLE_FAMILY_ADMIN }
+
+        # Generic frontend dashboard (all authenticated users)
+        - { path: ^/dashboard, roles: ROLE_USER }
+
+        # API routes
+        - { path: ^/api/family-admin, roles: ROLE_FAMILY_ADMIN }
+        - { path: ^/api, roles: ROLE_USER }
+    # access_denied_url: /login
 
 when@test:
     security:

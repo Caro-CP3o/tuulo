@@ -19,3 +19,9 @@ lexik_jwt_authentication:
         cookie:
             enabled: true
             name: token
+        authorization_header:
+            enabled: true
+            prefix: token
+            name: Authorization
+        query_parameter:
+            enabled: false
