@@ -31,7 +31,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read', 'family:read', 'post:read'])]
+    #[Groups(['user:read', 'family:read', 'post:read', 'post_like:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
@@ -51,16 +51,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre prénom')]
-    #[Groups(['user:read', 'user:write', 'family:read', 'post:read'])]
+    #[Groups(['user:read', 'user:write', 'family:read', 'post:read', 'post_like:read'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre nom de famille')]
-    #[Groups(['user:read', 'user:write', 'family:read', 'post:read'])]
+    #[Groups(['user:read', 'user:write', 'family:read', 'post:read', 'post_like:read'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:read', 'user:write', 'post:read'])]
+    #[Groups(['user:read', 'user:write', 'post:read', 'post_like:read'])]
     private ?string $alias = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
@@ -77,12 +77,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',])]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true)]
-    #[Groups(['user:read', 'user:write', 'media_object:read', 'post:read'])]
+    #[Groups(['user:read', 'user:write', 'media_object:read', 'post:read', 'post_like:read'])]
     public ?MediaObject $avatar = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Vous devez choisir une couleur')]
-    #[Groups(['user:read', 'user:write', 'post:read'])]
+    #[Groups(['user:read', 'user:write', 'post:read', 'post_like:read'])]
     private ?string $color = null;
 
     #[ORM\Column(length: 255)]

@@ -27,21 +27,19 @@ class Post
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['post:read'])]
+    #[Groups(['post:read', 'post_like:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull]
-    // #[Groups(['user:read', 'post:read', 'post:write'])]
-    #[Groups(['post:read'])]
+    #[Groups(['post:read', 'post_like:read'])]
     private ?User $author = null;
 
     #[ORM\ManyToOne(targetEntity: Family::class, inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull]
     #[Groups(['post:read'])]
-    // #[Groups(['post:read', 'post:write', 'family:read'])]
     private ?Family $family = null;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -61,7 +59,7 @@ class Post
         max: 255,
         maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères."
     )]
-    #[Groups(['post:read', 'post:write'])]
+    #[Groups(['post:read', 'post:write', 'post_like:read'])]
     private ?string $title = null;
 
     // #[ORM\Column(length: 255, nullable: true)]
@@ -95,7 +93,7 @@ class Post
      * @var Collection<int, PostLike>
      */
     #[ORM\OneToMany(targetEntity: PostLike::class, mappedBy: 'post', orphanRemoval: true)]
-    #[Groups(['post:read', 'postLike:read'])]
+    #[Groups(['post:read', 'post_like:read'])]
     private Collection $postLikes;
 
     /**
