@@ -11,9 +11,13 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiProperty;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 #[ORM\HasLifecycleCallbacks]
+#[ApiFilter(SearchFilter::class, properties: ['family.id' => 'exact'])]
+// #[ApiFilter(OrderFilter::class, properties: ['createdAt' => 'DESC'], arguments: ['orderParameterName' => 'order'])]
 #[ApiResource(
     normalizationContext: ['groups' => ['post:read']],
     denormalizationContext: ['groups' => ['post:write']],
@@ -91,7 +95,7 @@ class Post
      * @var Collection<int, PostLike>
      */
     #[ORM\OneToMany(targetEntity: PostLike::class, mappedBy: 'post', orphanRemoval: true)]
-    #[Groups(['post:read'])]
+    #[Groups(['post:read', 'postLike:read'])]
     private Collection $postLikes;
 
     /**
