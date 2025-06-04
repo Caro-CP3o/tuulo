@@ -123,7 +123,7 @@ class MediaObject
     private \DateTimeInterface $updatedAt;
 
     #[ApiProperty(types: ['https://schema.org/contentUrl'], writable: false)]
-    #[Groups(['media_object:read', 'media_object:write', 'user:read', 'family:read'])]
+    #[Groups(['media_object:read', 'media_object:write', 'user:read', 'family:read', 'post:read'])]
     #[SerializedName('contentUrl')]
     public function getContentUrl(): ?string
     {

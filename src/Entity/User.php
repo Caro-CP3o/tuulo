@@ -31,7 +31,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read', 'family:read'])]
+    #[Groups(['user:read', 'family:read', 'post:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
@@ -51,16 +51,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre prénom')]
-    #[Groups(['user:read', 'user:write', 'family:read'])]
+    #[Groups(['user:read', 'user:write', 'family:read', 'post:read'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre nom de famille')]
-    #[Groups(['user:read', 'user:write', 'family:read'])]
+    #[Groups(['user:read', 'user:write', 'family:read', 'post:read'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'post:read'])]
     private ?string $alias = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
@@ -77,12 +77,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',])]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true)]
-    #[Groups(['user:read', 'user:write', 'media_object:read'])]
+    #[Groups(['user:read', 'user:write', 'media_object:read', 'post:read'])]
     public ?MediaObject $avatar = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Vous devez choisir une couleur')]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'post:read'])]
     private ?string $color = null;
 
     #[ORM\Column(length: 255)]
@@ -113,7 +113,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, Post>
      */
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'author')]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'post:read'])]
     #[MaxDepth(1)]
     private Collection $posts;
 
@@ -121,7 +121,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, PostLike>
      */
     #[ORM\OneToMany(targetEntity: PostLike::class, mappedBy: 'user', orphanRemoval: true)]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'post:read'])]
     #[MaxDepth(1)]
     private Collection $postLikes;
 
@@ -129,7 +129,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, PostComment>
      */
     #[ORM\OneToMany(targetEntity: PostComment::class, mappedBy: 'user')]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'post:read'])]
     #[MaxDepth(1)]
     private Collection $postComments;
 
