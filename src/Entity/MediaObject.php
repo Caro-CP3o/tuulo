@@ -135,6 +135,22 @@ class MediaObject
     #[Groups(['media_object:read', 'media_object:write'])]
     private ?Post $post = null;
 
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['media_object:read'])]
+    private ?User $user = null;
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
+        return $this;
+    }
+
     public function getPost(): ?Post
     {
         return $this->post;

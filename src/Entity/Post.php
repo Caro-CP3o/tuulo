@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\Patch;
 use App\Repository\PostRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -13,12 +14,29 @@ use ApiPlatform\Metadata\ApiProperty;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post as ApiPost;
+use ApiPlatform\Metadata\Put;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 #[ApiFilter(SearchFilter::class, properties: ['family.id' => 'exact'])]
 // #[ApiFilter(OrderFilter::class, properties: ['createdAt' => 'DESC'], arguments: ['orderParameterName' => 'order'])]
+// #[ApiResource(
+//     normalizationContext: ['groups' => ['post:read']],
+//     denormalizationContext: ['groups' => ['post:write']],
+// )]
 #[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new ApiPost(),
+        new Put(),
+        new Patch(),
+        new Delete(),
+    ],
     normalizationContext: ['groups' => ['post:read']],
     denormalizationContext: ['groups' => ['post:write']],
 )]
@@ -65,19 +83,18 @@ class Post
     // #[ORM\Column(length: 255, nullable: true)]
     // #[Groups(['post:read', 'post:write'])]
     // private ?string $image = null;
-    #[ORM\OneToMany(mappedBy: 'post', targetEntity: MediaObject::class, cascade: ['persist', 'remove',])]
+    #[ORM\OneToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
     #[Groups(['post:write', 'post:read', 'media_object:read'])]
-    private Collection $images;
-    // private ?MediaObject $image = null;
+    private ?MediaObject $image = null;
 
     // #[ORM\Column(length: 255, nullable: true)]
     // #[Groups(['post:read', 'post:write'])]
     // private ?string $video = null;
-    #[ORM\ManyToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',])]
+    #[ORM\OneToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
     #[Groups(['post:write', 'post:read', 'media_object:read'])]
     private ?MediaObject $video = null;
 
@@ -94,20 +111,22 @@ class Post
      */
     #[ORM\OneToMany(targetEntity: PostLike::class, mappedBy: 'post', orphanRemoval: true)]
     #[Groups(['post:read', 'post_like:read'])]
+    #[ORM\JoinColumn(onDelete: "CASCADE")]
     private Collection $postLikes;
 
     /**
      * @var Collection<int, PostComment>
      */
-    #[ORM\OneToMany(targetEntity: PostComment::class, mappedBy: 'post')]
+    #[ORM\OneToMany(targetEntity: PostComment::class, mappedBy: 'post', orphanRemoval: true)]
     #[Groups(['post:read'])]
+    #[ORM\JoinColumn(onDelete: "CASCADE")]
     private Collection $postComments;
 
     public function __construct()
     {
         $this->postLikes = new ArrayCollection();
         $this->postComments = new ArrayCollection();
-        $this->images = new ArrayCollection();
+        // $this->images = new ArrayCollection();
     }
 
 
@@ -177,39 +196,41 @@ class Post
         return $this;
     }
 
-    // public function getImage(): ?string
+    public function getImage(): ?MediaObject
+    {
+        return $this->image;
+    }
+    #[Groups(['post:read'])]
+    public function getImageUrl(): ?string
+    {
+        return $this->image?->getContentUrl();
+    }
+    public function setImage(?MediaObject $image): static
+    {
+        $this->image = $image;
+
+        return $this;
+    }
+
+    // public function getImages(): Collection
     // {
-    //     return $this->image;
+    //     return $this->images;
     // }
 
-    // public function setImage(?string $image): static
+    // public function addImage(MediaObject $image): static
     // {
-    //     $this->image = $image;
+    //     if (!$this->images->contains($image)) {
+    //         $this->images->add($image);
+    //     }
 
     //     return $this;
     // }
-    /**
-     * @return Collection<int, MediaObject>
-     */
-    public function getImages(): Collection
-    {
-        return $this->images;
-    }
 
-    public function addImage(MediaObject $image): static
-    {
-        if (!$this->images->contains($image)) {
-            $this->images->add($image);
-        }
-
-        return $this;
-    }
-
-    public function removeImage(MediaObject $image): static
-    {
-        $this->images->removeElement($image);
-        return $this;
-    }
+    // public function removeImage(MediaObject $image): static
+    // {
+    //     $this->images->removeElement($image);
+    //     return $this;
+    // }
 
 
     public function getVideo(): ?string
