@@ -30,12 +30,17 @@ class PostAuthorSubscriber implements EventSubscriberInterface
         $post = $event->getControllerResult();
         $method = $event->getRequest()->getMethod();
 
-        if (!$post instanceof Post || $method !== 'POST') {
+        // if (!$post instanceof Post || $method !== 'POST') {
+        //     return;
+        // }
+        if (!$post instanceof Post || !in_array($method, ['POST', 'PATCH'], true)) {
             return;
         }
 
+
         $user = $this->security->getUser();
 
+        // if ($method === 'POST' && $user)
         if ($user) {
             $post->setAuthor($user);
 
@@ -44,8 +49,16 @@ class PostAuthorSubscriber implements EventSubscriberInterface
                 $post->setFamily($familyMember->getFamily());
             }
         }
-        foreach ($post->getImages() as $image) {
+        // foreach ($post->getImage() as $image) {
+        //     $image->setPost($post);
+        // }
+        $image = $post->getImage();
+        if ($image !== null) {
             $image->setPost($post);
         }
+        $video = $post->getVideo();
+        // if ($video !== null) {
+        //     $video->setPost($post);
+        // }
     }
 }
