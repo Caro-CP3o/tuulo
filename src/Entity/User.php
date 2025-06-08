@@ -3,6 +3,10 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post as ApiPost;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Put;
 use App\Repository\UserRepository;
 use Cocur\Slugify\Slugify;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -15,14 +19,28 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\ApiProperty;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Patch;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new ApiPost(),
+        new Put(),
+        new Patch(),
+        new Delete(),
+    ],
     normalizationContext: ['groups' => ['user:read']],
     denormalizationContext: ['groups' => ['user:write']],
 )]
+// #[ApiResource(
+//     normalizationContext: ['groups' => ['user:read']],
+//     denormalizationContext: ['groups' => ['user:write']],
+// )]
 #[ORM\HasLifecycleCallbacks]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[UniqueEntity(fields: ['email'], message: 'Un autre utilisateur possède déjà cette adresse e-mail, merci de la modifier')]
@@ -74,9 +92,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // #[Assert\File(maxSize: '1024k', maxSizeMessage: 'La taille du fichier est trop grande')]
     // #[Groups(['user:read', 'user:write'])]
     // private ?string $avatar = null;
-    #[ORM\ManyToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',])]
+    #[ORM\OneToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
     #[Groups(['user:read', 'user:write', 'media_object:read', 'post:read', 'post_like:read'])]
     public ?MediaObject $avatar = null;
 
