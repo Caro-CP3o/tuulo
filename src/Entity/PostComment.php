@@ -8,26 +8,42 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PostCommentRepository::class)]
+#[ORM\Table]
+// #[ORM\UniqueConstraint(name: 'user_post_unique', columns: ['user_id', 'post_id'])]
 #[ORM\HasLifecycleCallbacks]
+#[ApiResource(
+    normalizationContext: ['groups' => ['comment:read']],
+    denormalizationContext: ['groups' => ['comment:write']],
+)]
+#[ApiFilter(SearchFilter::class, properties: [
+    'user' => 'exact',
+    'post' => 'exact',
+])]
 class PostComment
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['comment:read', 'comment:write'])]
+    #[Groups(['comment:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'postComments')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['comment:read', 'comment:write'])]
+    #[MaxDepth(1)]
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'postComments')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['comment:read', 'comment:write'])]
+    #[MaxDepth(1)]
     private ?Post $post = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'replies')]
