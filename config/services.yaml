@@ -28,6 +28,10 @@ services:
         tags:
             - { name: doctrine.event_subscriber }
 
+    App\Events\PostCommentAuthorSubscriber:
+        tags:
+            - { name: kernel.event_subscriber }
+
     # App\Events\PostSubscriber:
     #     tags:
     #         - { name: doctrine.event_subscriber }
