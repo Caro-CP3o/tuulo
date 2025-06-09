@@ -83,7 +83,7 @@ class Post
     // #[ORM\Column(length: 255, nullable: true)]
     // #[Groups(['post:read', 'post:write'])]
     // private ?string $image = null;
-    #[ORM\OneToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',], orphanRemoval: true)]
+    #[ORM\OneToOne(targetEntity: MediaObject::class, inversedBy: 'post', cascade: ['persist', 'remove',], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
     #[Groups(['post:write', 'post:read', 'media_object:read'])]
@@ -92,7 +92,7 @@ class Post
     // #[ORM\Column(length: 255, nullable: true)]
     // #[Groups(['post:read', 'post:write'])]
     // private ?string $video = null;
-    #[ORM\OneToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',], orphanRemoval: true)]
+    #[ORM\OneToOne(targetEntity: MediaObject::class, inversedBy: 'post', cascade: ['persist', 'remove',], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
     #[Groups(['post:write', 'post:read', 'media_object:read'])]

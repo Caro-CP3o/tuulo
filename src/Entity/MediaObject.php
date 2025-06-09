@@ -130,7 +130,7 @@ class MediaObject
         return $this->filePath ? '/media/' . $this->filePath : null;
     }
 
-    #[ORM\ManyToOne(targetEntity: Post::class, inversedBy: 'images')]
+    #[ORM\ManyToOne(targetEntity: Post::class, )]
     #[ORM\JoinColumn(onDelete: "CASCADE", nullable: true)]
     #[Groups(['media_object:read', 'media_object:write'])]
     private ?Post $post = null;
