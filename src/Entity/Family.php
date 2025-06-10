@@ -2,6 +2,10 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post as ApiPost;
 use App\Repository\FamilyRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -9,6 +13,8 @@ use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Validator\Constraints as Assert;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiProperty;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Patch;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
@@ -17,6 +23,15 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
 #[ORM\Table(uniqueConstraints: [new ORM\UniqueConstraint(name: 'UNIQ_JOIN_CODE', columns: ['joinCode'])])]
 
 #[ApiResource(
+    security: "is_granted('ROLE_USER')",
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new ApiPost(),
+        new Put(security: "is_granted('ROLE_FAMILY_ADMIN')"),
+        new Patch(security: "is_granted('ROLE_FAMILY_ADMIN')"),
+        new Delete(security: "is_granted('ROLE_FAMILY_ADMIN')"),
+    ],
     normalizationContext: ['groups' => ['family:read']],
     denormalizationContext: ['groups' => ['family:write']],
 )]

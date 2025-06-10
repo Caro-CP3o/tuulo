@@ -2,6 +2,11 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post as ApiPost;
+use ApiPlatform\Metadata\Put;
 use App\Repository\PostCommentRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -11,6 +16,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\Delete;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -19,6 +25,15 @@ use Doctrine\ORM\Mapping as ORM;
 // #[ORM\UniqueConstraint(name: 'user_post_unique', columns: ['user_id', 'post_id'])]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
+    security: "is_granted('ROLE_USER')",
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new ApiPost(security: "is_granted('ROLE_USER')"),
+        new Put(security: "object.getUser() == user"),
+        new Patch(security: "object.getUser() == user"),
+        new Delete(security: "object.getUser() == user or is_granted('ROLE_FAMILY_ADMIN')"),
+    ],
     normalizationContext: ['groups' => ['comment:read']],
     denormalizationContext: ['groups' => ['comment:write']],
 )]

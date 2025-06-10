@@ -4,10 +4,16 @@ namespace App\Entity;
 
 
 use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post as ApiPost;
 use App\Repository\PostLikeRepository;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Patch;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
 
@@ -17,6 +23,15 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
 #[ORM\UniqueConstraint(name: 'user_post_unique', columns: ['user_id', 'post_id'])]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
+    security: "is_granted('ROLE_USER')",
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new ApiPost(security: "is_granted('ROLE_USER')"),
+        new Put(security: "object.getUser() == user"),
+        new Patch(security: "object.getUser() == user"),
+        new Delete(security: "object.getUser() == user or is_granted('ROLE_FAMILY_ADMIN')"),
+    ],
     normalizationContext: ['groups' => ['post_like:read']],
     denormalizationContext: ['groups' => ['post_like:write']],
 )]

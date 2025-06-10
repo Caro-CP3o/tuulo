@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\Patch;
 use App\Repository\PostRepository;
+use App\Repository\FamilyMemberRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -24,18 +25,15 @@ use ApiPlatform\Metadata\Put;
 #[ORM\HasLifecycleCallbacks]
 #[ApiFilter(SearchFilter::class, properties: ['family.id' => 'exact'])]
 // #[ApiFilter(OrderFilter::class, properties: ['createdAt' => 'DESC'], arguments: ['orderParameterName' => 'order'])]
-// #[ApiResource(
-//     normalizationContext: ['groups' => ['post:read']],
-//     denormalizationContext: ['groups' => ['post:write']],
-// )]
 #[ApiResource(
+    security: "is_granted('ROLE_USER')",
     operations: [
         new Get(),
         new GetCollection(),
         new ApiPost(),
-        new Put(),
-        new Patch(),
-        new Delete(),
+        new Put(security: "object.getAuthor() == user"),
+        new Patch(security: "object.getAuthor() == user"),
+        new Delete(security: "object.getAuthor() == user or is_granted('ROLE_FAMILY_ADMIN')"),
     ],
     normalizationContext: ['groups' => ['post:read']],
     denormalizationContext: ['groups' => ['post:write']],
@@ -80,18 +78,12 @@ class Post
     #[Groups(['post:read', 'post:write', 'post_like:read'])]
     private ?string $title = null;
 
-    // #[ORM\Column(length: 255, nullable: true)]
-    // #[Groups(['post:read', 'post:write'])]
-    // private ?string $image = null;
     #[ORM\OneToOne(targetEntity: MediaObject::class, inversedBy: 'post', cascade: ['persist', 'remove',], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
     #[Groups(['post:write', 'post:read', 'media_object:read'])]
     private ?MediaObject $image = null;
 
-    // #[ORM\Column(length: 255, nullable: true)]
-    // #[Groups(['post:read', 'post:write'])]
-    // private ?string $video = null;
     #[ORM\OneToOne(targetEntity: MediaObject::class, inversedBy: 'post', cascade: ['persist', 'remove',], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
@@ -172,6 +164,16 @@ class Post
         return $this;
     }
 
+    // public function isMember(User $user): bool
+    // {
+    //     foreach ($this->familyMembers as $familyMember) {
+    //         if ($familyMember->getUser()->getId() === $user->getId()) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
+
     public function getContent(): ?string
     {
         return $this->content;
@@ -211,34 +213,12 @@ class Post
 
         return $this;
     }
-
-    // public function getImages(): Collection
-    // {
-    //     return $this->images;
-    // }
-
-    // public function addImage(MediaObject $image): static
-    // {
-    //     if (!$this->images->contains($image)) {
-    //         $this->images->add($image);
-    //     }
-
-    //     return $this;
-    // }
-
-    // public function removeImage(MediaObject $image): static
-    // {
-    //     $this->images->removeElement($image);
-    //     return $this;
-    // }
-
-
-    public function getVideo(): ?string
+    public function getVideo(): ?MediaObject
     {
         return $this->video;
     }
 
-    public function setVideo(?string $video): static
+    public function setVideo(?MediaObject $video): static
     {
         $this->video = $video;
 
@@ -329,3 +309,4 @@ class Post
         return $this;
     }
 }
+

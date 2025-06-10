@@ -26,13 +26,14 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
+    security: "is_granted('ROLE_USER')",
     operations: [
         new Get(),
         new GetCollection(),
         new ApiPost(),
-        new Put(),
-        new Patch(),
-        new Delete(),
+        new Put(security: "object == user"),
+        new Patch(security: "object == user"),
+        new Delete(security: "object == user or is_granted('ROLE_FAMILY_ADMIN')"),
     ],
     normalizationContext: ['groups' => ['user:read']],
     denormalizationContext: ['groups' => ['user:write']],
@@ -161,6 +162,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
     #[Groups(['user:read', 'user:write'])]
     private ?string $registrationStep = null;
+
+    // #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    // #[Groups(['user:read'])]
+    // private bool $isApproved = false;
+
+    // #[ORM\Column(type: 'string', length: 20, options: ['default' => 'pending'])]
+    // #[Groups(['user:read'])]
+    // private string $status = 'pending'; // 'pending', 'approved', 'rejected'
+
 
     /**
      * @ORM\Column(type="datetime", nullable=true)

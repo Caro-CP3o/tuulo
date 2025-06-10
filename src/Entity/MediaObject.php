@@ -24,6 +24,7 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 #[ORM\HasLifecycleCallbacks]
 #[Vich\Uploadable]
 #[ApiResource(
+    security: "is_granted('ROLE_USER')",
     normalizationContext: ['groups' => ['media_object:read']],
     types: ['https://schema.org/MediaObject'],
     outputFormats: ['jsonld' => ['application/ld+json']],
