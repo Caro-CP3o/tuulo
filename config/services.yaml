@@ -32,6 +32,10 @@ services:
         tags:
             - { name: kernel.event_subscriber }
 
+    # App\Events\FamilyInvitationSubscriber:
+    #     tags:
+    #         - { name: doctrine.event_subscriber }
+
     # App\Events\PostSubscriber:
     #     tags:
     #         - { name: doctrine.event_subscriber }
