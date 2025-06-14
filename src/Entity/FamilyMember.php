@@ -2,16 +2,40 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Put;
 use App\Repository\FamilyMemberRepository;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post as ApiPost;
+use App\Controller\FamilyMemberController;
 
 #[ORM\Entity(repositoryClass: FamilyMemberRepository::class)]
-#[ApiFilter(SearchFilter::class, properties: ['user' => 'exact'])]
+#[ApiFilter(SearchFilter::class, properties: ['user' => 'exact', 'family' => 'exact', 'status' => 'exact'])]
 #[ApiResource(
+    security: "is_granted('ROLE_USER')",
+    operations: [
+        new Get(security: "object.getUser() == user or is_granted('ROLE_FAMILY_ADMIN')"),
+        new GetCollection(),
+        new ApiPost(),
+        new Put(security: "is_granted('ROLE_USER') and object.getUser() == user"),
+        new Delete(security: "is_granted('ROLE_FAMILY_ADMIN') or object.getUser() == user"),
+        new Patch(
+
+            name: 'approve_family_member',
+            uriTemplate: '/family_members/{id}/approve',
+            controller: FamilyMemberController::class,
+            read: true,
+            deserialize: false,
+            security: "is_granted('ROLE_FAMILY_ADMIN')",
+        ),
+    ],
     normalizationContext: ['groups' => ['familyMember:read']],
     denormalizationContext: ['groups' => ['familyMember:write']],
 )]
@@ -25,19 +49,19 @@ class FamilyMember
 
     #[ORM\ManyToOne(inversedBy: 'familyMembers')]
     #[ORM\JoinColumn(nullable: true)]
-    #[Groups(['familyMember:read', 'familyMember:write'])]
+    #[Groups(['familyMember:read', 'familyMember:write', 'invitation:read'])]
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'familyMembers')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['familyMember:read', 'familyMember:write'])]
+    #[Groups(['familyMember:read', 'familyMember:write', 'invitation:read'])]
     private ?Family $family = null;
 
     #[ORM\Column]
     #[Groups(['familyMember:read'])]
     private ?\DateTimeImmutable $joinedAt = null;
 
-    // pending, approved, active, rejected
+    // pending, active, rejected
     #[ORM\Column(length: 20)]
     #[Groups(['familyMember:read', 'familyMember:write'])]
     private string $status = 'pending';

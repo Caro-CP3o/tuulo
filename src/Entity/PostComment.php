@@ -70,7 +70,7 @@ class PostComment
      * @var Collection<int, self>
      */
     #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent')]
-    #[ORM\OrderBy(['createdAt' => 'ASC'])]
+    // #[ORM\OrderBy(['createdAt' => 'ASC'])]
     #[Groups(['comment:read'])]
     private Collection $replies;
 

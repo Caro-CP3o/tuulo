@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use App\Controller\CreateFamilyInvitationController;
 use App\Repository\FamilyInvitationRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -14,6 +15,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post as ApiPost;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\String\ByteString;
 
 #[ORM\Entity(repositoryClass: FamilyInvitationRepository::class)]
 #[ApiResource(
@@ -21,7 +23,12 @@ use Doctrine\DBAL\Types\Types;
     operations: [
         new Get(),
         new GetCollection(),
-        new ApiPost(security: "is_granted('ROLE_FAMILY_ADMIN')"),
+        new ApiPost(
+            controller: CreateFamilyInvitationController::class,
+            security: "is_granted('ROLE_FAMILY_ADMIN')",
+            deserialize: false, // We'll handle JSON manually
+            name: 'create_family_invitation'
+        ),
         new Put(security: "is_granted('ROLE_FAMILY_ADMIN')"),
         new Patch(security: "is_granted('ROLE_FAMILY_ADMIN')"),
         new Delete(security: "is_granted('ROLE_FAMILY_ADMIN')"),
@@ -29,6 +36,19 @@ use Doctrine\DBAL\Types\Types;
     normalizationContext: ['groups' => ['invitation:read']],
     denormalizationContext: ['groups' => ['invitation:write']]
 )]
+// #[ApiResource(
+//     security: "is_granted('ROLE_USER')",
+//     operations: [
+//         new Get(),
+//         new GetCollection(),
+//         new ApiPost(security: "is_granted('ROLE_FAMILY_ADMIN')"),
+//         new Put(security: "is_granted('ROLE_FAMILY_ADMIN')"),
+//         new Patch(security: "is_granted('ROLE_FAMILY_ADMIN')"),
+//         new Delete(security: "is_granted('ROLE_FAMILY_ADMIN')"),
+//     ],
+//     normalizationContext: ['groups' => ['invitation:read']],
+//     denormalizationContext: ['groups' => ['invitation:write']]
+// )]
 #[ORM\HasLifecycleCallbacks]
 class FamilyInvitation
 {
@@ -40,15 +60,15 @@ class FamilyInvitation
 
     #[ORM\ManyToOne(inversedBy: 'familyInvitations')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotNull]
+    // #[Assert\NotNull]
     #[Groups(['invitation:read', 'invitation:write'])]
     private ?Family $family = null;
 
-    #[ORM\Column(length: 64, unique: true)]
-    #[Assert\NotBlank]
+    #[ORM\Column(length: 255, nullable: false, unique: true)]
+    // #[Assert\NotBlank]
     #[Assert\Length(max: 64)]
-    #[Groups(['invitation:read', 'invitation:write'])]
-    private ?string $code = null;
+    #[Groups(['invitation:read'])]
+    private ?string $code;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['invitation:read', 'invitation:write'])]
@@ -58,9 +78,9 @@ class FamilyInvitation
     #[Groups(['invitation:read', 'invitation:write'])]
     private ?\DateTimeImmutable $expiresAt = null;
 
-    #[ORM\Column(options: ['default' => false])]
-    #[Groups(['invitation:read'])]
-    #[Assert\NotNull]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Groups(['invitation:read', 'invitation:write', 'user:read', 'user:write', 'family:read'])]
+    // #[Assert\NotNull]
     private ?bool $used = false;
 
     #[ORM\PrePersist]
@@ -72,6 +92,7 @@ class FamilyInvitation
     {
         $this->used = false;
         $this->expiresAt = new \DateTimeImmutable('+7 days');
+        $this->code = ByteString::fromRandom(10)->toString();
     }
 
     public function getId(): ?int
@@ -125,7 +146,7 @@ class FamilyInvitation
         return $this->used;
     }
 
-    public function setUsed(bool $used): static
+    public function setUsed(bool $used): self
     {
         $this->used = $used;
 

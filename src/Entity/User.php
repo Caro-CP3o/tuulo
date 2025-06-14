@@ -30,7 +30,7 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
     operations: [
         new Get(),
         new GetCollection(),
-        new ApiPost(),
+        new ApiPost(security: "is_granted('PUBLIC_ACCESS')"),
         new Put(security: "object == user"),
         new Patch(security: "object == user"),
         new Delete(security: "object == user or is_granted('ROLE_FAMILY_ADMIN')"),
@@ -50,12 +50,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read', 'family:read', 'post:read', 'post_like:read', 'comment:read'])]
+    #[Groups(['user:read', 'family:read', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
     #[Assert\Email(message: 'Veuillez renseigner un email valide')]
-    #[Groups(['user:read', 'user:write', 'family:read'])]
+    #[Groups(['user:read', 'user:write', 'family:read', 'familyMember:read'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
@@ -70,16 +70,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre prénom')]
-    #[Groups(['user:read', 'user:write', 'family:read', 'post:read', 'post_like:read', 'comment:read'])]
+    #[Groups(['user:read', 'user:write', 'family:read', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre nom de famille')]
-    #[Groups(['user:read', 'user:write', 'family:read', 'post:read', 'post_like:read', 'comment:read'])]
+    #[Groups(['user:read', 'user:write', 'family:read', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:read', 'user:write', 'post:read', 'post_like:read', 'comment:read'])]
+    #[Groups(['user:read', 'user:write', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
     private ?string $alias = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
@@ -96,12 +96,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
-    #[Groups(['user:read', 'user:write', 'media_object:read', 'post:read', 'post_like:read', 'comment:read'])]
+    #[Groups(['user:read', 'user:write', 'media_object:read', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
     public ?MediaObject $avatar = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Vous devez choisir une couleur')]
-    #[Groups(['user:read', 'user:write', 'post:read', 'post_like:read', 'comment:read'])]
+    #[Groups(['user:read', 'user:write', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
     private ?string $color = null;
 
     #[ORM\Column(length: 255)]
@@ -109,7 +109,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $slug = null;
 
     #[ORM\Column]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'familyMember:read'])]
     private array $roles = ['ROLE_USER'];
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -124,7 +124,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, FamilyMember>
      */
     #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'user')]
-    #[Groups(['user:read', 'user:write', 'family:write', 'family:read'])]
+    #[Groups(['user:read', 'user:write', 'family:write', 'family:read', 'invitation:read', 'familyMember:read'])]
     #[MaxDepth(1)]
     private Collection $familyMembers;
 
@@ -162,15 +162,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
     #[Groups(['user:read', 'user:write'])]
     private ?string $registrationStep = null;
-
-    // #[ORM\Column(type: 'boolean', options: ['default' => false])]
-    // #[Groups(['user:read'])]
-    // private bool $isApproved = false;
-
-    // #[ORM\Column(type: 'string', length: 20, options: ['default' => 'pending'])]
-    // #[Groups(['user:read'])]
-    // private string $status = 'pending'; // 'pending', 'approved', 'rejected'
-
 
     /**
      * @ORM\Column(type="datetime", nullable=true)

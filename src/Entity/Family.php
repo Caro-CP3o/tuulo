@@ -27,7 +27,7 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
     operations: [
         new Get(),
         new GetCollection(),
-        new ApiPost(),
+        new ApiPost(security: "is_granted('ROLE_USER')"),
         new Put(security: "is_granted('ROLE_FAMILY_ADMIN')"),
         new Patch(security: "is_granted('ROLE_FAMILY_ADMIN')"),
         new Delete(security: "is_granted('ROLE_FAMILY_ADMIN')"),
@@ -41,13 +41,13 @@ class Family
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['family:read'])]
+    #[Groups(['family:read', 'familyMember:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "Le nom de votre famille est requis.")]
     #[Assert\Length(max: 255, maxMessage: "Le nom de votre famille ne peut être supérieur à {{ limit }} caractères.")]
-    #[Groups(['family:write', 'family:read'])]
+    #[Groups(['family:write', 'family:read', 'familyMember:read'])]
     private ?string $name = null;
 
     // #[ORM\Column(length: 255, nullable: true)]
@@ -73,7 +73,7 @@ class Family
      * @var Collection<int, FamilyMember>
      */
     #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'family', orphanRemoval: true)]
-    #[Groups(['family:read'])]
+    #[Groups(['family:read', 'familyMember:read'])]
     #[MaxDepth(1)]
     private Collection $familyMembers;
 
@@ -94,7 +94,7 @@ class Family
      * @var Collection<int, FamilyInvitation>
      */
     #[ORM\OneToMany(targetEntity: FamilyInvitation::class, mappedBy: 'family', orphanRemoval: true)]
-    #[Groups(['family:read', 'family:write'])]
+    #[Groups(['family:read', 'family:write', 'familyMember:read'])]
     #[MaxDepth(1)]
     private Collection $familyInvitations;
 
