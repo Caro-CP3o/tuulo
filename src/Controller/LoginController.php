@@ -73,6 +73,17 @@ class LoginController extends AbstractController
             if (!$user->isVerified()) {
                 return new JsonResponse(['error' => 'Email not verified'], 403);
             }
+            $hasActiveFamily = false;
+            foreach ($user->getFamilyMembers() as $fm) {
+                if ($fm->getStatus() === 'active') {
+                    $hasActiveFamily = true;
+                    break;
+                }
+            }
+
+            if (!$hasActiveFamily) {
+                return new JsonResponse(['error' => 'Your family membership has not been approved yet.'], 403);
+            }
 
             if (!$hasher->isPasswordValid($user, $data['password'])) {
                 return new JsonResponse(['error' => 'Invalid credentials'], 401);
@@ -83,10 +94,10 @@ class LoginController extends AbstractController
             $cookie = new Cookie(
                 name: 'token',
                 value: $jwt,
-                expire: 0,
+                expire: time() + 86400,
                 path: '/',
                 domain: null,
-                secure: false,
+                secure: false, // A changer true en production
                 httpOnly: true,
                 sameSite: Cookie::SAMESITE_LAX
             );
