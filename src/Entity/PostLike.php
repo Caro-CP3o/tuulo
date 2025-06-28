@@ -44,23 +44,23 @@ class PostLike
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['post_like:read'])]
+    #[Groups(['post_like:read', 'user:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'postLikes')]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['post_like:read', 'post_like:write'])]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    #[Groups(['post_like:read', 'post_like:write', 'user:read', 'post:read'])]
     #[MaxDepth(1)]
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'postLikes')]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['post_like:read', 'post_like:write'])]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    #[Groups(['post_like:read', 'post_like:write', 'user:read', 'post:read'])]
     #[MaxDepth(1)]
     private ?Post $post = null;
 
     #[ORM\Column]
-    #[Groups(['post_like:read'])]
+    #[Groups(['post_like:read', 'user:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\PrePersist]

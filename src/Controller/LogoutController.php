@@ -13,6 +13,10 @@ use Symfony\Component\HttpFoundation\Response;
 class LogoutController extends AbstractController
 {
     #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
+    /**
+     * Handles user logout.
+     * @return JsonResponse
+     */
     public function logout(): Response
     {
         $cookie = Cookie::create(
@@ -21,7 +25,7 @@ class LogoutController extends AbstractController
             expire: time() - 3600, // Expired in the past
             path: '/',
             domain: null,
-            secure: false, // true in prod
+            secure: false, // true in production
             httpOnly: true,
             sameSite: Cookie::SAMESITE_LAX
         );

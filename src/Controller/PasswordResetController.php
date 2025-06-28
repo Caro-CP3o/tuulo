@@ -6,6 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+// Not in use
 final class PasswordResetController extends AbstractController
 {
     #[Route('/password/reset', name: 'app_password_reset')]

@@ -38,10 +38,6 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
     normalizationContext: ['groups' => ['user:read']],
     denormalizationContext: ['groups' => ['user:write']],
 )]
-// #[ApiResource(
-//     normalizationContext: ['groups' => ['user:read']],
-//     denormalizationContext: ['groups' => ['user:write']],
-// )]
 #[ORM\HasLifecycleCallbacks]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[UniqueEntity(fields: ['email'], message: 'Un autre utilisateur possède déjà cette adresse e-mail, merci de la modifier')]
@@ -50,12 +46,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read', 'family:read', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
+    #[Groups(['user:read', 'family:read', 'post:read', 'post_like:read', 'comment:read', 'family_member:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
     #[Assert\Email(message: 'Veuillez renseigner un email valide')]
-    #[Groups(['user:read', 'user:write', 'family:read', 'familyMember:read'])]
+    #[Groups(['user:read', 'user:write', 'family:read', 'family_member:read'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
@@ -70,16 +66,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre prénom')]
-    #[Groups(['user:read', 'user:write', 'family:read', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
+    #[Groups(['user:read', 'user:write', 'family:read', 'post:read', 'post_like:read', 'comment:read', 'family_member:read'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'vous devez renseigner votre nom de famille')]
-    #[Groups(['user:read', 'user:write', 'family:read', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
+    #[Groups(['user:read', 'user:write', 'family:read', 'post:read', 'post_like:read', 'comment:read', 'family_member:read'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:read', 'user:write', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
+    #[Groups(['user:read', 'user:write', 'post:read', 'post_like:read', 'comment:read', 'family_member:read'])]
     private ?string $alias = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
@@ -88,20 +84,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read', 'user:write'])]
     private ?\DateTimeInterface $birthDate = null;
 
-    // #[ORM\Column(length: 255, nullable: true)]
-    // #[Assert\Image(mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'], mimeTypesMessage: 'Vous devez uploader un fichier jpg, jpeg, png ou gif')]
-    // #[Assert\File(maxSize: '1024k', maxSizeMessage: 'La taille du fichier est trop grande')]
-    // #[Groups(['user:read', 'user:write'])]
-    // private ?string $avatar = null;
-    #[ORM\OneToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',], orphanRemoval: true)]
+    #[ORM\OneToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
-    #[Groups(['user:read', 'user:write', 'media_object:read', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
-    public ?MediaObject $avatar = null;
+    #[Groups(['user:read', 'user:write', 'media_object:read', 'post:read', 'post_like:read', 'comment:read', 'family_member:read'])]
+    private ?MediaObject $avatar = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Vous devez choisir une couleur')]
-    #[Groups(['user:read', 'user:write', 'post:read', 'post_like:read', 'comment:read', 'familyMember:read'])]
+    #[Groups(['user:read', 'user:write', 'post:read', 'post_like:read', 'comment:read', 'family_member:read'])]
     private ?string $color = null;
 
     #[ORM\Column(length: 255)]
@@ -109,7 +100,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $slug = null;
 
     #[ORM\Column]
-    #[Groups(['user:read', 'user:write', 'familyMember:read'])]
+    #[Groups(['user:read', 'user:write', 'family_member:read', 'family:read', 'invitation:read'])]
     private array $roles = ['ROLE_USER'];
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -123,8 +114,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, FamilyMember>
      */
-    #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'user')]
-    #[Groups(['user:read', 'user:write', 'family:write', 'family:read', 'invitation:read', 'familyMember:read'])]
+    #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
+    #[Groups(['user:read', 'user:write', 'family:write', 'family:read', 'invitation:read', 'family_member:read'])]
     #[MaxDepth(1)]
     private Collection $familyMembers;
 
@@ -170,6 +161,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private ?\DateTimeInterface $emailVerificationExpiresAt = null;
 
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: MediaObject::class, cascade: ['persist', 'remove'])]
+    #[Groups(['user:read', 'user:write', 'media_object:read'])]
+    private Collection $mediaObjects;
+
+    public function getMediaObjects(): Collection
+    {
+        return $this->mediaObjects;
+    }
+
+    public function addMediaObject(MediaObject $mediaObject): self
+    {
+        if (!$this->mediaObjects->contains($mediaObject)) {
+            $this->mediaObjects[] = $mediaObject;
+            $mediaObject->setUser($this);
+        }
+        return $this;
+    }
+
+    public function removeMediaObject(MediaObject $mediaObject): self
+    {
+        if ($this->mediaObjects->removeElement($mediaObject)) {
+            if ($mediaObject->getUser() === $this) {
+                $mediaObject->setUser(null);
+            }
+        }
+        return $this;
+    }
+
     public function getEmailVerificationExpiresAt(): ?\DateTimeInterface
     {
         return $this->emailVerificationExpiresAt;
@@ -187,6 +206,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->posts = new ArrayCollection();
         $this->postLikes = new ArrayCollection();
         $this->postComments = new ArrayCollection();
+        $this->mediaObjects = new ArrayCollection();
     }
 
     public function getRegistrationStep(): string
@@ -254,11 +274,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return (string) $this->email;
     }
-
-    // public function getUsername(): string
-    // {
-    //     return $this->email;
-    // }
 
     public function getPassword(): ?string
     {
@@ -329,23 +344,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // public function getAvatar(): ?string
-    // {
-    //     return $this->avatar;
-    // }
-
-    // public function setAvatar(?string $avatar): static
-    // {
-    //     $this->avatar = $avatar;
-
-    //     return $this;
-    // }
     public function getAvatar(): ?MediaObject
     {
         return $this->avatar;
     }
 
-    public function setAvatar(?MediaObject $avatar): static
+    public function setAvatar(?MediaObject $avatar): self
     {
         $this->avatar = $avatar;
 
@@ -414,7 +418,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->familyMembers;
     }
 
-    public function addFamilyMember(FamilyMember $familyMember): static
+    public function addFamilyMember(FamilyMember $familyMember): self
     {
         if (!$this->familyMembers->contains($familyMember)) {
             $this->familyMembers->add($familyMember);
@@ -424,15 +428,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function removeFamilyMember(FamilyMember $familyMember): static
+
+    public function removeFamilyMember(FamilyMember $familyMember): self
     {
-        if ($this->familyMembers->removeElement($familyMember)) {
-            // set the owning side to null (unless already changed)
+        if ($this->familyMembers->contains($familyMember)) {
+            $this->familyMembers->removeElement($familyMember);
+            // break the link back
             if ($familyMember->getUser() === $this) {
                 $familyMember->setUser(null);
             }
         }
-
         return $this;
     }
 
@@ -457,7 +462,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removePost(Post $post): static
     {
         if ($this->posts->removeElement($post)) {
-            // set the owning side to null (unless already changed)
+
             if ($post->getAuthor() === $this) {
                 $post->setAuthor(null);
             }
@@ -487,7 +492,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removePostLike(PostLike $postLike): static
     {
         if ($this->postLikes->removeElement($postLike)) {
-            // set the owning side to null (unless already changed)
+
             if ($postLike->getUser() === $this) {
                 $postLike->setUser(null);
             }
@@ -517,7 +522,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removePostComment(PostComment $postComment): static
     {
         if ($this->postComments->removeElement($postComment)) {
-            // set the owning side to null (unless already changed)
+
             if ($postComment->getUser() === $this) {
                 $postComment->setUser(null);
             }
@@ -530,22 +535,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->createdAt;
     }
 
-    // public function setCreatedAt(\DateTimeInterface $createdAt): static
-// {
-//     $this->createdAt = $createdAt;
-
-    //     return $this;
-// }
-
     public function getUpdatedAt(): ?\DateTimeInterface
     {
         return $this->updatedAt;
     }
 
-    // public function setUpdatedAt(\DateTimeInterface $updatedAt): static
-// {
-//     $this->updatedAt = $updatedAt;
-
-    //     return $this;
-// }
 }

@@ -1,17 +1,16 @@
 security:
-    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
         App\Entity\User: 'auto'
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
             algorithm: 'auto'
-            cost:      15    
-    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
+            cost: 15    
+
     providers:
-        # users_in_memory: { memory: null }
         app_user_provider:
             entity:
                 class: App\Entity\User
                 property: email
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -21,77 +20,53 @@ security:
             pattern: ^/api/users
             stateless: true
             methods: [POST]
+
         login:
             pattern: ^/api/login
             stateless: true
-            # json_login:
-            #     check_path: /api/login_check
-            #     username_path: email   # <-- Accept "email" field
-            #     password_path: password
-            #     success_handler: lexik_jwt_authentication.handler.authentication_success
-            #     failure_handler: lexik_jwt_authentication.handler.authentication_failure 
+
         api:
             pattern:   ^/api
             stateless: true
             jwt: ~
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
 
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
         main:
             lazy: true
             provider: app_user_provider
+
     role_hierarchy:
         ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_MODERATOR, ROLE_FAMILY_ADMIN, ROLE_USER]
         ROLE_ADMIN: [ROLE_FAMILY_ADMIN, ROLE_MODERATOR, ROLE_USER]
         ROLE_FAMILY_ADMIN: ROLE_USER
         ROLE_MODERATOR: ROLE_USER
 
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
-        # - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        # - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-        # - { path: ^/api/login, roles: PUBLIC_ACCESS }
-        # - { path: ^/api/customers, roles: IS_AUTHENTICATED_FULLY }
-        # - { path: ^/api/invoices, roles: IS_AUTHENTICATED_FULLY }
-        # - { path: ^/api, roles: IS_AUTHENTICATED_FULLY, methods: [GET,PUT,PATCH,DELETE] }
-
-        - { path: ^/api/users, methods: [POST], roles: PUBLIC_ACCESS }
-        
-        # Public login endpoint (API)
+        # Public endpoints
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
-
-        # Public access for invitation validation
+        - { path: ^/api/users, methods: [POST], roles: PUBLIC_ACCESS }
+        - { path: ^/api/media_objects, roles: PUBLIC_ACCESS }
+        - { path: ^/api/users/check-email, roles: PUBLIC_ACCESS }
         - { path: ^/api/validate-invitation, roles: PUBLIC_ACCESS }
+        - { path: ^/api/families/colors-used, roles: PUBLIC_ACCESS }
+        - { path: ^/api/resend-verification-email, roles: PUBLIC_ACCESS }
 
-        # Admin frontend area (only ROLE_ADMIN)
+        # Frontend access
         - { path: ^/admin, roles: ROLE_ADMIN }
-
-        # Family admin dashboard frontend (only ROLE_FAMILY_ADMIN)
         - { path: ^/dashboard/family-admin, roles: ROLE_FAMILY_ADMIN }
-
-        # Generic frontend dashboard (all authenticated users)
+        - { path: ^/auth/settings, roles: ROLE_FAMILY_ADMIN }
         - { path: ^/dashboard, roles: ROLE_USER }
 
-        # API routes
+        # API endpoints
         - { path: ^/api/family-admin, roles: ROLE_FAMILY_ADMIN }
-        - { path: ^/api, roles: ROLE_USER }
-    # access_denied_url: /login
+        - { path: ^/api, roles: ROLE_USER } # << This covers all other API endpoints
+        - { path: ^/media_objects, roles: ROLE_USER }
 
 when@test:
     security:
         password_hashers:
-            # By default, password hashers are resource intensive and take time. This is
-            # important to generate secure password hashes. In tests however, secure hashes
-            # are not important, waste resources and increase test times. The following
-            # reduces the work factor to the lowest possible values.
             Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
                 App\Entity\User: 'auto'
                 algorithm: auto
-                cost: 4 # Lowest possible value for bcrypt
-                time_cost: 3 # Lowest possible value for argon
-                memory_cost: 10 # Lowest possible value for argon
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

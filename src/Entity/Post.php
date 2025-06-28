@@ -24,7 +24,6 @@ use ApiPlatform\Metadata\Put;
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 #[ApiFilter(SearchFilter::class, properties: ['family.id' => 'exact'])]
-// #[ApiFilter(OrderFilter::class, properties: ['createdAt' => 'DESC'], arguments: ['orderParameterName' => 'order'])]
 #[ApiResource(
     security: "is_granted('ROLE_USER')",
     operations: [
@@ -47,15 +46,15 @@ class Post
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'posts')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     #[Assert\NotNull]
     #[Groups(['post:read', 'post_like:read'])]
     private ?User $author = null;
 
     #[ORM\ManyToOne(targetEntity: Family::class, inversedBy: 'posts')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     #[Assert\NotNull]
-    #[Groups(['post:read'])]
+    #[Groups(['post:read', 'family:read', 'user:read'])]
     private ?Family $family = null;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -78,13 +77,13 @@ class Post
     #[Groups(['post:read', 'post:write', 'post_like:read'])]
     private ?string $title = null;
 
-    #[ORM\OneToOne(targetEntity: MediaObject::class, inversedBy: 'post', cascade: ['persist', 'remove',], orphanRemoval: true)]
+    #[ORM\OneToOne(targetEntity: MediaObject::class, inversedBy: 'imagePost', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
     #[Groups(['post:write', 'post:read', 'media_object:read'])]
     private ?MediaObject $image = null;
 
-    #[ORM\OneToOne(targetEntity: MediaObject::class, inversedBy: 'post', cascade: ['persist', 'remove',], orphanRemoval: true)]
+    #[ORM\OneToOne(targetEntity: MediaObject::class, inversedBy: 'videoPost', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
     #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
     #[Groups(['post:write', 'post:read', 'media_object:read'])]
@@ -118,7 +117,6 @@ class Post
     {
         $this->postLikes = new ArrayCollection();
         $this->postComments = new ArrayCollection();
-        // $this->images = new ArrayCollection();
     }
 
 
@@ -164,16 +162,6 @@ class Post
         return $this;
     }
 
-    // public function isMember(User $user): bool
-    // {
-    //     foreach ($this->familyMembers as $familyMember) {
-    //         if ($familyMember->getUser()->getId() === $user->getId()) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-
     public function getContent(): ?string
     {
         return $this->content;
@@ -197,32 +185,41 @@ class Post
 
         return $this;
     }
-
     public function getImage(): ?MediaObject
     {
         return $this->image;
     }
-    #[Groups(['post:read'])]
-    public function getImageUrl(): ?string
-    {
-        return $this->image?->getContentUrl();
-    }
-    public function setImage(?MediaObject $image): static
+
+    public function setImage(?MediaObject $image): self
     {
         $this->image = $image;
 
+        if ($image !== null && $image->getImagePost() !== $this) {
+            $image->setImagePost($this);
+        }
+
         return $this;
     }
+
     public function getVideo(): ?MediaObject
     {
         return $this->video;
     }
 
-    public function setVideo(?MediaObject $video): static
+    public function setVideo(?MediaObject $video): self
     {
         $this->video = $video;
 
+        if ($video !== null && $video->getVideoPost() !== $this) {
+            $video->setVideoPost($this);
+        }
+
         return $this;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        return $this->image?->getContentUrl();
     }
 
     public function getCreatedAt(): ?\DateTimeImmutable
@@ -270,7 +267,7 @@ class Post
     public function removePostLike(PostLike $postLike): static
     {
         if ($this->postLikes->removeElement($postLike)) {
-            // set the owning side to null (unless already changed)
+
             if ($postLike->getPost() === $this) {
                 $postLike->setPost(null);
             }
@@ -300,7 +297,7 @@ class Post
     public function removePostComment(PostComment $postComment): static
     {
         if ($this->postComments->removeElement($postComment)) {
-            // set the owning side to null (unless already changed)
+
             if ($postComment->getPost() === $this) {
                 $postComment->setPost(null);
             }

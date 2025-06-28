@@ -22,7 +22,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PostCommentRepository::class)]
 #[ORM\Table]
-// #[ORM\UniqueConstraint(name: 'user_post_unique', columns: ['user_id', 'post_id'])]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     security: "is_granted('ROLE_USER')",
@@ -50,19 +49,19 @@ class PostComment
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'postComments')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     #[Groups(['comment:read', 'comment:write'])]
     #[MaxDepth(1)]
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'postComments')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     #[Groups(['comment:read', 'comment:write'])]
     #[MaxDepth(1)]
     private ?Post $post = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'replies')]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
     #[Groups(['comment:read'])]
     private ?self $parent = null;
 
@@ -70,7 +69,6 @@ class PostComment
      * @var Collection<int, self>
      */
     #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent')]
-    // #[ORM\OrderBy(['createdAt' => 'ASC'])]
     #[Groups(['comment:read'])]
     private Collection $replies;
 
@@ -174,7 +172,7 @@ class PostComment
     public function removeReply(self $reply): static
     {
         if ($this->replies->removeElement($reply)) {
-            // set the owning side to null (unless already changed)
+
             if ($reply->getParent() === $this) {
                 $reply->setParent(null);
             }

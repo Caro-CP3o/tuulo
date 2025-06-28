@@ -13,8 +13,6 @@ final class UserVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        // replace with your own logic
-        // https://symfony.com/doc/current/security/voters.html
         return in_array($attribute, [self::EDIT, self::VIEW])
             && $subject instanceof \App\Entity\User;
     }
@@ -23,30 +21,15 @@ final class UserVoter extends Voter
     {
         $user = $token->getUser();
 
-        // if the user is anonymous, do not grant access
         if (!$user instanceof UserInterface) {
             return false;
         }
 
-        // ... (check conditions and return true to grant permission) ...
-        // switch ($attribute) {
-        //     case self::EDIT:
-        //         // logic to determine if the user can EDIT
-        //         // return true or false
-        //         break;
-
-        //     case self::VIEW:
-        //         // logic to determine if the user can VIEW
-        //         // return true or false
-        //         break;
-        // }
-        // $subject is the User entity being accessed
         /** @var \App\Entity\User $subject */
 
         switch ($attribute) {
             case self::EDIT:
             case self::VIEW:
-                // Only allow if the user is accessing their own profile
                 return $user === $subject;
         }
 

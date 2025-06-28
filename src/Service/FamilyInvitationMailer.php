@@ -1,56 +1,65 @@
 <?php
-
 namespace App\Service;
 
 use App\Entity\FamilyInvitation;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Twig\Environment;
 
 class FamilyInvitationMailer
 {
-    public function __construct(private MailerInterface $mailer)
-    {
+    /**
+     * Service responsible for sending family invitation emails to users or non-registered users.
+     *
+     * @param \Symfony\Component\Mailer\MailerInterface $mailer
+     * @param \Twig\Environment $twig
+     */
+    public function __construct(
+        private MailerInterface $mailer,
+        private Environment $twig
+    ) {
     }
 
+    /**
+     * Send a family invitation email with a unique invitation code and URL.
+     *
+     * @param string $email
+     * @param \App\Entity\FamilyInvitation $invitation
+     * @param string $inviteUrl
+     * @return void
+     */
     public function sendInvitation(string $email, FamilyInvitation $invitation, string $inviteUrl): void
     {
-        $message = (new Email())
-            ->to($email)
-            ->subject('You’ve been invited to join a family')
-            ->html(sprintf(
-                '<p>You’ve been invited to join a family. Click the link below to register:</p><p><a href="%s">%s</a></p>',
-                htmlspecialchars($inviteUrl),
-                htmlspecialchars($inviteUrl)
-            ));
+        // ---------------------------
+        // Fetch configuration values from environment
+        // ---------------------------
+        $senderEmail = $_ENV['MAILER_FROM'];
+        $frontendUrl = $_ENV['FRONTEND_URL'];
 
+        // ---------------------------
+        // Render HTML email content from Twig template
+        // ---------------------------
+        $html = $this->twig->render('emails/invitation.html.twig', [
+            'familyName' => $invitation->getFamily()->getName(),
+            'invite_url' => $inviteUrl,
+            'frontend_url' => $frontendUrl,
+            'code' => $invitation->getCode(),
+            'sender_email' => $senderEmail,
+            'expires_at' => $invitation->getExpiresAt()->format('H:i'),
+
+        ]);
+        // ---------------------------
+        // Create the email message with subject, sender, recipient, and HTML content
+        // ---------------------------
+        $message = (new Email())
+            // ->from($inviteUrl)
+            ->from($senderEmail)
+            ->to($email)
+            ->subject('Vous avez été invité à rejoindre une famille !')
+            ->html($html); // 👈 Inject the rendered Twig HTML
+        // ---------------------------
+        // Send the email
+        // ---------------------------
         $this->mailer->send($message);
     }
 }
-
-
-
-// namespace App\Service;
-
-// use App\Entity\FamilyInvitation;
-// use Symfony\Component\Mailer\MailerInterface;
-// use Symfony\Component\Mime\Email;
-
-// class FamilyInvitationMailer
-// {
-//     public function __construct(private MailerInterface $mailer)
-//     {
-//     }
-
-//     public function sendInvitation(string $recipientEmail, FamilyInvitation $invitation): void
-//     {
-//         $url = sprintf('https://your-frontend-app.com/invite/%s', $invitation->getCode());
-
-//         $email = (new Email())
-//             ->from('noreply@yourapp.com')
-//             ->to($recipientEmail)
-//             ->subject('You are invited to join a family on Tuulo!')
-//             ->text("Hello!\n\nYou’ve been invited to join a family on Tuulo.\nUse this link: $url\n\nThis link expires in 7 days.");
-
-//         $this->mailer->send($email);
-//     }
-// }

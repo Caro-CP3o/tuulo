@@ -16,6 +16,8 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post as ApiPost;
 use App\Controller\FamilyMemberController;
 
+#[ORM\UniqueConstraint(name: "unique_user", columns: ["user_id"])]
+
 #[ORM\Entity(repositoryClass: FamilyMemberRepository::class)]
 #[ApiFilter(SearchFilter::class, properties: ['user' => 'exact', 'family' => 'exact', 'status' => 'exact'])]
 #[ApiResource(
@@ -25,9 +27,9 @@ use App\Controller\FamilyMemberController;
         new GetCollection(),
         new ApiPost(),
         new Put(security: "is_granted('ROLE_USER') and object.getUser() == user"),
-        new Delete(security: "is_granted('ROLE_FAMILY_ADMIN') or object.getUser() == user"),
+        new Delete(),
+        // security: "is_granted('ROLE_FAMILY_ADMIN') or object.getUser() == user"
         new Patch(
-
             name: 'approve_family_member',
             uriTemplate: '/family_members/{id}/approve',
             controller: FamilyMemberController::class,
@@ -36,42 +38,42 @@ use App\Controller\FamilyMemberController;
             security: "is_granted('ROLE_FAMILY_ADMIN')",
         ),
     ],
-    normalizationContext: ['groups' => ['familyMember:read']],
-    denormalizationContext: ['groups' => ['familyMember:write']],
+    normalizationContext: ['groups' => ['family_member:read']],
+    denormalizationContext: ['groups' => ['family_member:write']],
 )]
 class FamilyMember
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['familyMember:read'])]
+    #[Groups(['family_member:read', 'user:read', 'family:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'familyMembers')]
     #[ORM\JoinColumn(nullable: true)]
-    #[Groups(['familyMember:read', 'familyMember:write', 'invitation:read'])]
+    #[Groups(['family_member:read', 'family_member:write', 'invitation:read', 'user:read', 'family:read'])]
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'familyMembers')]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['familyMember:read', 'familyMember:write', 'invitation:read'])]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    #[Groups(['family_member:read', 'family_member:write', 'invitation:read', 'user:read', 'family:read'])]
     private ?Family $family = null;
 
     #[ORM\Column]
-    #[Groups(['familyMember:read'])]
+    #[Groups(['family_member:read', 'user:read'])]
     private ?\DateTimeImmutable $joinedAt = null;
 
     // pending, active, rejected
     #[ORM\Column(length: 20)]
-    #[Groups(['familyMember:read', 'familyMember:write'])]
+    #[Groups(['family_member:read', 'family_member:write', 'invitation:read', 'user:read', 'family:read'])]
     private string $status = 'pending';
 
     #[ORM\Column(length: 180, nullable: true)]
-    #[Groups(['familyMember:read', 'familyMember:write'])]
+    #[Groups(['family_member:read', 'family_member:write', 'invitation:read', 'user:read', 'family:read'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['familyMember:write'])]
+    #[Groups(['family_member:write', 'family_member:read', 'invitation:read', 'user:read', 'family:read'])]
     private ?string $token = null;
 
     public function getToken(): ?string
@@ -116,6 +118,10 @@ class FamilyMember
         return $this->id;
     }
 
+    /**
+     * Summary of getUser
+     * @return User|null
+     */
     public function getUser(): ?User
     {
         return $this->user;
@@ -127,7 +133,10 @@ class FamilyMember
 
         return $this;
     }
-
+    /**
+     * Summary of getFamily
+     * @return Family|null
+     */
     public function getFamily(): ?Family
     {
         return $this->family;
@@ -150,5 +159,22 @@ class FamilyMember
         $this->joinedAt = $joinedAt;
 
         return $this;
+    }
+
+    #[Groups(['user:read'])]
+    public function getUserId(): ?int
+    {
+        return $this->user?->getId();
+    }
+
+    #[Groups(['user:read'])]
+    public function getFamilyId(): ?int
+    {
+        return $this->family?->getId();
+    }
+
+    public function getColor(): ?string
+    {
+        return $this->user?->getColor();
     }
 }

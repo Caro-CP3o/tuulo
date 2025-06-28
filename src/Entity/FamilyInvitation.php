@@ -25,7 +25,7 @@ use Symfony\Component\String\ByteString;
         new GetCollection(),
         new ApiPost(
             controller: CreateFamilyInvitationController::class,
-            security: "is_granted('ROLE_FAMILY_ADMIN')",
+            // security: "is_granted('ROLE_FAMILY_ADMIN')",
             deserialize: false, // We'll handle JSON manually
             name: 'create_family_invitation'
         ),
@@ -59,7 +59,7 @@ class FamilyInvitation
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'familyInvitations')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     // #[Assert\NotNull]
     #[Groups(['invitation:read', 'invitation:write'])]
     private ?Family $family = null;
@@ -141,6 +141,12 @@ class FamilyInvitation
         return $this;
     }
 
+    public function isExpired(): bool
+    {
+        return $this->expiresAt < new \DateTimeImmutable();
+    }
+
+
     public function isUsed(): ?bool
     {
         return $this->used;
@@ -151,5 +157,10 @@ class FamilyInvitation
         $this->used = $used;
 
         return $this;
+    }
+    public function isValid(): bool
+    {
+        // Not expired and not used
+        return !$this->isExpired() && !$this->used;
     }
 }

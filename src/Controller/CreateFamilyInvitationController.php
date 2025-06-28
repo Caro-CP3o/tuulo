@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\FamilyInvitation;
 use App\Repository\FamilyRepository;
+use App\Repository\FamilyMemberRepository;
 use App\Service\FamilyInvitationMailer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,19 +23,36 @@ class CreateFamilyInvitationController extends AbstractController
         private SerializerInterface $serializer,
         private FamilyInvitationMailer $mailer,
         private FamilyRepository $familyRepository,
-        private UrlGeneratorInterface $urlGenerator, // for generating the link
+        private UrlGeneratorInterface $urlGenerator,
     ) {
     }
 
     #[Route('/api/family-invitations', name: 'app_create_family_invitation', methods: ['POST'])]
+    /**
+     * Create a new family invitation.
+     * Accessible only to users with ROLE_FAMILY_ADMIN.
+     *
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @throws \Symfony\Component\Security\Core\Exception\AccessDeniedException
+     * @throws \Symfony\Component\HttpKernel\Exception\BadRequestHttpException
+     * @return JsonResponse
+     */
     public function __invoke(Request $request): JsonResponse
     {
+        // ---------------------------
+        // Get the currently authenticated user
+        // ---------------------------
         $user = $this->getUser();
-
+        // ---------------------------
+        // Check user has ROLE_FAMILY_ADMIN
+        // ---------------------------
         if (!$user || !in_array('ROLE_FAMILY_ADMIN', $user->getRoles(), true)) {
-            throw new AccessDeniedException('Only family admins can create invitations.');
+            throw new AccessDeniedException('Seul un administrateur de famille peut créer une invitation.');
         }
-
+        // ---------------------------
+        // Decode JSON payload from the request
+        // Expected keys: family (IRI), email (optional), sendEmail (boolean)
+        // ---------------------------
         $data = json_decode($request->getContent(), true);
 
         $familyIri = $data['family'] ?? null;
@@ -42,17 +60,20 @@ class CreateFamilyInvitationController extends AbstractController
         $sendEmail = $data['sendEmail'] ?? false;
 
         if (!$familyIri) {
-            throw new BadRequestHttpException('Family is required.');
+            throw new BadRequestHttpException('Le famille IRI est requis.');
         }
 
         $familyId = basename($familyIri);
         $family = $this->familyRepository->find($familyId);
-
+        // ---------------------------
+        // Validate: family IRI is required
+        // ---------------------------
         if (!$family) {
-            throw new BadRequestHttpException('Family not found.');
+            throw new BadRequestHttpException('Famille introuvable.');
         }
-
-        // Optional: check user is a member of the family
+        // ---------------------------
+        // Extract the family ID from IRI and fetch family from database
+        // ---------------------------
         $isMember = false;
         foreach ($user->getFamilyMembers() as $familyMember) {
             if ($familyMember->getFamily() === $family) {
@@ -60,114 +81,39 @@ class CreateFamilyInvitationController extends AbstractController
                 break;
             }
         }
-
+        // ---------------------------
+        // Ensure user is actually a member of this family
+        // ---------------------------
         if (!$isMember) {
-            throw new AccessDeniedException('You are not a member of this family.');
+            throw new AccessDeniedException('Vous n\'êtes pas membre de cette famille.');
         }
-
+        // ---------------------------
+        // Create and persist new FamilyInvitation entity
+        // ---------------------------
         $invitation = new FamilyInvitation();
         $invitation->setFamily($family);
 
         $this->em->persist($invitation);
         $this->em->flush();
 
-        // Generate the link to send in email
-        // $inviteUrl = $this->urlGenerator->generate(
-        //     'app_front_invite',
-        //     ['code' => $invitation->getCode()],
-        //     UrlGeneratorInterface::ABSOLUTE_URL
-        // );
-        $inviteUrl = 'http://localhost:3000/invite?code=' . urlencode($invitation->getCode());
+        // ---------------------------
+        // Build the invitation URL for frontend
+        // ---------------------------
+        $frontendUrl = $_ENV['FRONTEND_URL'];
+        $inviteUrl = $frontendUrl . '/invite?code=' . urlencode($invitation->getCode());
 
-
+        // ---------------------------
+        // Send invitation email if requested and email is provided
+        // ---------------------------
         if ($sendEmail && $email) {
             $this->mailer->sendInvitation($email, $invitation, $inviteUrl);
         }
-
-        // Always return code for frontend use
+        // ---------------------------
+        // Return JSON response with invitation code and URL
+        // ---------------------------
         return new JsonResponse([
             'code' => $invitation->getCode(),
             'inviteUrl' => $inviteUrl,
         ], 201);
     }
 }
-
-
-
-// namespace App\Controller;
-
-// use App\Entity\FamilyInvitation;
-// use App\Repository\FamilyRepository;
-// use App\Service\FamilyInvitationMailer;
-// use Doctrine\ORM\EntityManagerInterface;
-// use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-// use Symfony\Component\HttpFoundation\JsonResponse;
-// use Symfony\Component\HttpFoundation\Request;
-// use Symfony\Component\Routing\Annotation\Route;
-// use Symfony\Component\Serializer\SerializerInterface;
-// use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-// use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-
-// class CreateFamilyInvitationController extends AbstractController
-// {
-//     public function __construct(
-//         private EntityManagerInterface $em,
-//         private SerializerInterface $serializer,
-//         private FamilyInvitationMailer $mailer,
-//         private FamilyRepository $familyRepository
-//     ) {
-//     }
-
-//     #[Route('/api/family-invitations', name: 'app_create_family_invitation', methods: ['POST'])]
-//     public function __invoke(Request $request): JsonResponse
-//     {
-//         $user = $this->getUser();
-
-//         if (!$user || !in_array('ROLE_FAMILY_ADMIN', $user->getRoles(), true)) {
-//             throw new AccessDeniedException('Only family admins can create invitations.');
-//         }
-
-//         $data = json_decode($request->getContent(), true);
-
-//         $familyIri = $data['family'] ?? null;
-//         $email = $data['email'] ?? null;
-//         $sendEmail = $data['sendEmail'] ?? false;
-
-//         if (!$familyIri) {
-//             throw new BadRequestHttpException('Family is required.');
-//         }
-
-//         $familyId = basename($familyIri);
-//         $family = $this->familyRepository->find($familyId);
-
-//         if (!$family) {
-//             throw new BadRequestHttpException('Family not found.');
-//         }
-
-//         $isMember = false;
-//         foreach ($user->getFamilyMembers() as $familyMember) {
-//             if ($familyMember->getFamily() === $family) {
-//                 $isMember = true;
-//                 break;
-//             }
-//         }
-
-//         if (!$isMember) {
-//             throw new AccessDeniedException('You are not a member of this family.');
-//         }
-
-//         $invitation = new FamilyInvitation();
-//         $invitation->setFamily($family);
-
-//         $this->em->persist($invitation);
-//         $this->em->flush();
-
-//         if ($sendEmail && $email) {
-//             $this->mailer->sendInvitation($email, $invitation);
-//         }
-
-//         $json = $this->serializer->serialize($invitation, 'json', ['groups' => ['invitation:read']]);
-
-//         return new JsonResponse(json_decode($json), 201);
-//     }
-// }

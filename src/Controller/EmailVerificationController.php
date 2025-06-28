@@ -13,6 +13,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class EmailVerificationController extends AbstractController
 {
+    /**
+     * Summary of __construct
+     * @param \App\Repository\UserRepository $userRepository
+     * @param \Doctrine\ORM\EntityManagerInterface $em
+     * @param \Psr\Log\LoggerInterface $logger
+     */
     public function __construct(
         private UserRepository $userRepository,
         private EntityManagerInterface $em,
@@ -21,60 +27,67 @@ class EmailVerificationController extends AbstractController
     }
 
     #[Route('/verify-email', name: 'app_verify_email', methods: ['GET'])]
+    /**
+     * Verifies the user's email based on a verification code from the query string.
+     *
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @return RedirectResponse|\Symfony\Component\HttpFoundation\JsonResponse
+     */
     public function verifyEmail(Request $request): Response
     {
+        // ---------------------------
+        // Validate verification code from query parameter
+        // ---------------------------
         $code = $request->query->get('code');
-        // if (!$code) {
-        //     return new Response('Missing verification code.', Response::HTTP_BAD_REQUEST);
-        // }
+
         if (!$code) {
             return $this->json(['error' => 'Missing verification code.'], Response::HTTP_BAD_REQUEST);
         }
-        // Find the user by the verification code
+        // ---------------------------
+        // Find user by verification code
+        // ---------------------------
         $user = $this->userRepository->findOneBy(['emailVerificationCode' => $code]);
 
-        // if (!$user) {
-        //     return new Response('Invalid or expired verification token.', Response::HTTP_BAD_REQUEST);
-        // }
         if (!$user) {
             return $this->json(['error' => 'Invalid or expired verification token.'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Check expiry
+        // ---------------------------
+        // Check if the token has expired
+        // ---------------------------
         $expiresAt = $user->getEmailVerificationExpiresAt();
         $now = new \DateTime();
-
-        // if ($expiresAt === null || $expiresAt < $now) {
-        //     return new Response('Verification token has expired.', Response::HTTP_BAD_REQUEST);
-        // }
 
         if ($expiresAt === null || $expiresAt <= $now) {
             return $this->json(['error' => 'Verification token has expired.'], Response::HTTP_BAD_REQUEST);
         }
-
+        // ---------------------------
+        // Handle already verified users
+        // ---------------------------
         if ($user->isVerified()) {
             return $this->json(['message' => 'Email already verified.'], Response::HTTP_OK);
         }
 
-        // Mark user as verified and clear the token
+        // ---------------------------
+        // Mark user as verified and clear verification fields
+        // ---------------------------
         $user->setIsVerified(true);
         $user->setEmailVerificationCode(null);
         $user->setEmailVerificationExpiresAt(null);
 
-        // Persist changes
+        // Persist changes to database
         $this->em->flush();
 
-        // Log successful verification
+        // ---------------------------
+        // Log the successful verification
+        // ---------------------------
         $this->logger->info('Email verified for user ID: ' . $user->getId());
 
-        // return new Response('Your email has been verified successfully.');
-        $frontendBaseUrl = $_ENV['FRONTEND_URL'] ?? 'http://localhost:3000';
+        // ---------------------------
+        // Redirect to frontend confirmation page
+        // ---------------------------
+        $frontendBaseUrl = $_ENV['FRONTEND_URL'] ?? 'https://www.tuulo.be/verified-email';
         $redirectUrl = $frontendBaseUrl . '/verified-email';
-        // $redirectUrl = $frontendBaseUrl . '/verify-email?code=' . $code;
-        // $redirectUrl = $frontendBaseUrl . '/verify-email?code=' . urlencode($code);
-        // $redirectUrl = $frontendBaseUrl . '/verify-email?code=' . urlencode($code) . '&success=true';
-
-
 
         return new RedirectResponse($redirectUrl);
 

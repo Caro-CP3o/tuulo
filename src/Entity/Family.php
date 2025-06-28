@@ -20,7 +20,6 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: FamilyRepository::class)]
-#[ORM\Table(uniqueConstraints: [new ORM\UniqueConstraint(name: 'UNIQ_JOIN_CODE', columns: ['joinCode'])])]
 
 #[ApiResource(
     security: "is_granted('ROLE_USER')",
@@ -50,11 +49,10 @@ class Family
     #[Groups(['family:write', 'family:read', 'familyMember:read'])]
     private ?string $name = null;
 
-    // #[ORM\Column(length: 255, nullable: true)]
-    #[ORM\ManyToOne(targetEntity: MediaObject::class, cascade: ['persist', 'remove',])]
+    #[ORM\OneToOne(targetEntity: MediaObject::class, orphanRemoval: true, cascade: ['persist', 'remove',])]
     #[ApiProperty(types: ['https://schema.org/image'], writable: true)]
-    #[ORM\JoinColumn(nullable: true)]
-    #[Groups(['family:write', 'family:read', 'media_object:read'])]
+    #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
+    #[Groups(['family:write', 'family:read', 'media_object:read', 'familyMember:read', 'user:read'])]
     private ?MediaObject $coverImage = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -72,21 +70,22 @@ class Family
     /**
      * @var Collection<int, FamilyMember>
      */
-    #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'family', orphanRemoval: true)]
-    #[Groups(['family:read', 'familyMember:read'])]
+    #[ORM\OneToMany(targetEntity: FamilyMember::class, mappedBy: 'family', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['family:read', 'familyMember:read', 'user:read'])]
     #[MaxDepth(1)]
     private Collection $familyMembers;
 
     /**
      * @var Collection<int, Post>
      */
-    #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'family')]
-    #[Groups(['family:read'])]
+    #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'family', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['family:read', 'familyMember:read', 'post:read'])]
     #[MaxDepth(1)]
     private Collection $posts;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[Groups(['family:read', 'family:write'])]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
+    #[Groups(['family:read', 'family:write', 'familyMember:read', 'post:read', 'user:read'])]
     #[MaxDepth(1)]
     private ?User $creator = null;
 
@@ -142,18 +141,6 @@ class Family
         $this->coverImage = $coverImage;
         return $this;
     }
-    // public function getCoverImage(): ?string
-    // {
-    //     return $this->coverImage;
-    // }
-
-    // public function setCoverImage(?string $coverImage): static
-    // {
-    //     $this->coverImage = $coverImage;
-
-    //     return $this;
-    // }
-
     public function getDescription(): ?string
     {
         return $this->description;
@@ -186,7 +173,7 @@ class Family
         return $this->familyMembers;
     }
 
-    public function addFamilyMember(FamilyMember $familyMember): static
+    public function addFamilyMember(FamilyMember $familyMember): self
     {
         if (!$this->familyMembers->contains($familyMember)) {
             $this->familyMembers->add($familyMember);
@@ -196,18 +183,16 @@ class Family
         return $this;
     }
 
-    public function removeFamilyMember(FamilyMember $familyMember): static
+    public function removeFamilyMember(FamilyMember $familyMember): self
     {
-        if ($this->familyMembers->removeElement($familyMember)) {
-            // set the owning side to null (unless already changed)
+        if ($this->familyMembers->contains($familyMember)) {
+            $this->familyMembers->removeElement($familyMember);
             if ($familyMember->getFamily() === $this) {
                 $familyMember->setFamily(null);
             }
         }
-
         return $this;
     }
-
     /**
      * @return Collection<int, Post>
      */
@@ -229,7 +214,6 @@ class Family
     public function removePost(Post $post): static
     {
         if ($this->posts->removeElement($post)) {
-            // set the owning side to null (unless already changed)
             if ($post->getFamily() === $this) {
                 $post->setFamily(null);
             }
@@ -259,7 +243,6 @@ class Family
     public function removeFamilyInvitation(FamilyInvitation $familyInvitation): static
     {
         if ($this->familyInvitations->removeElement($familyInvitation)) {
-            // set the owning side to null (unless already changed)
             if ($familyInvitation->getFamily() === $this) {
                 $familyInvitation->setFamily(null);
             }

@@ -31,11 +31,9 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
     operations: [
         new Get(),
         new GetCollection(),
-        // new ApiPost(),
-        // new Delete(security: "is_granted('MEDIA_OBJECT_DELETE', object)"),
-        // new Delete(security: "is_granted('ROLE_USER')"),
         new Delete(),
         new ApiPost(
+            security: "is_granted('PUBLIC_ACCESS')",
             controller: CreateMediaObjectActionController::class,
             inputFormats: ['multipart' => ['multipart/form-data']],
             validationContext: ['groups' => ['media_object_create']],
@@ -58,7 +56,7 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
                 )
             )
         ),
-        new Patch( // This is for replacing an existing file
+        new Patch(
             controller: CreateMediaObjectActionController::class,
             inputFormats: ['multipart' => ['multipart/form-data']],
             validationContext: ['groups' => ['media_object_create']],
@@ -91,11 +89,6 @@ class MediaObject
     #[ORM\Column]
     #[Groups(['media_object:read'])]
     private ?int $id = null;
-
-    // #[ApiProperty(types: ['https://schema.org/contentUrl'], writable: false)]
-    // #[Groups(['media_object:read'])]
-    // // #[SerializedName('contentUrl')]
-    // public ?string $contentUrl = null;
 
     #[Vich\UploadableField(mapping: 'media_object', fileNameProperty: 'filePath')]
     #[Assert\NotNull(groups: ['media_object_create'])]
@@ -131,15 +124,49 @@ class MediaObject
         return $this->filePath ? '/media/' . $this->filePath : null;
     }
 
-    #[ORM\ManyToOne(targetEntity: Post::class, )]
-    #[ORM\JoinColumn(onDelete: "CASCADE", nullable: true)]
-    #[Groups(['media_object:read', 'media_object:write'])]
-    private ?Post $post = null;
-
-    #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'mediaObjects')]
+    #[ORM\JoinColumn(nullable: true)]
     #[Groups(['media_object:read'])]
     private ?User $user = null;
+
+
+    #[ORM\OneToOne(targetEntity: Post::class, mappedBy: 'image')]
+    private ?Post $imagePost = null;
+
+    #[ORM\OneToOne(targetEntity: Post::class, mappedBy: 'video')]
+    private ?Post $videoPost = null;
+
+    public function getImagePost(): ?Post
+    {
+        return $this->imagePost;
+    }
+
+    public function setImagePost(?Post $post): self
+    {
+        $this->imagePost = $post;
+
+        if ($post !== null && $post->getImage() !== $this) {
+            $post->setImage($this);
+        }
+
+        return $this;
+    }
+
+    public function getVideoPost(): ?Post
+    {
+        return $this->videoPost;
+    }
+
+    public function setVideoPost(?Post $post): self
+    {
+        $this->videoPost = $post;
+
+        if ($post !== null && $post->getVideo() !== $this) {
+            $post->setVideo($this);
+        }
+
+        return $this;
+    }
 
     public function getUser(): ?User
     {
@@ -151,31 +178,6 @@ class MediaObject
         $this->user = $user;
         return $this;
     }
-
-    public function getPost(): ?Post
-    {
-        return $this->post;
-    }
-
-    public function setPost(?Post $post): static
-    {
-        $this->post = $post;
-        return $this;
-    }
-    // #[ORM\ManyToOne(targetEntity: Post::class, inversedBy: 'images')]
-    // #[ORM\JoinColumn(nullable: false)]
-    // private ?Post $post = null;
-
-    // public function getPost(): ?Post
-    // {
-    //     return $this->post;
-    // }
-
-    // public function setPost(?Post $post): self
-    // {
-    //     $this->post = $post;
-    //     return $this;
-    // }
     public function __construct()
     {
         $this->updatedAt = new \DateTimeImmutable();
